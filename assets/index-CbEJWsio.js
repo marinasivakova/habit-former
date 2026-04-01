@@ -13080,6 +13080,11 @@ function AppRoutes() {
 //#endregion
 //#region src/app/App.tsx
 function App() {
+	const userId = useAuthStore((state) => state.activeUserId);
+	const loadHabitsForUser = useHabitsStore((state) => state.loadHabitsForUser);
+	(0, import_react.useEffect)(() => {
+		if (userId) loadHabitsForUser(userId);
+	}, [userId]);
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(HashRouter, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ThemeProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AppRoutes, {}) }) });
 }
 //#endregion
