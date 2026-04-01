@@ -1,6 +1,7 @@
 import { type FC, type ButtonHTMLAttributes } from "react";
 import { useTheme } from "../theme";
 import styles from "./button.module.scss";
+import { typography } from "../tokens";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     variant?: "primary" | "secondary" | "tab";
@@ -26,6 +27,9 @@ export const Button: FC<ButtonProps> = ({
         "--tab-text": colors.text,
         "--primary-gradient": `linear-gradient(270deg, ${colors.primary}, ${colors.primaryHover}, ${colors.primary})`,
         color: variant === "primary" ? colors.text : undefined,
+        fontFamily: typography.fontFamily,
+        fontSize: typography.sizes.md,
+        fontWeight: typography.weights.semiBold,
     } as React.CSSProperties;
 
     const className = [
