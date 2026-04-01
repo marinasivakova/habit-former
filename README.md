@@ -1,73 +1,77 @@
-# React + TypeScript + Vite
+# Habit Former
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A habit-tracking web application built with **React + TypeScript + Vite** using modern frontend architecture (FSD), Zustand for state management, and modular SCSS.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Tech Stack
 
-## React Compiler
+- **React 19** – UI library
+- **TypeScript** – type safety
+- **Vite** – fast bundler and dev server
+- **Zustand** – lightweight state management
+- **modular SCSS** – scoped, maintainable styles
+- **React Router v7** – navigation and routing
+- **ESLint + Prettier** – code quality and formatting
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## Project Structure (FSD)
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+src/
+├─ app/ # App entry and routes
+├─ pages/ # Feature pages (Home, HabitDetail, Auth)
+├─ entities/ # Core domain entities (Habit, User, etc.)
+├─ features/ # Modular features (habit tracking, stats, etc.)
+├─ shared/ # Configs, utils, constants
+└─ widgets/ # Reusable UI components
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+---
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Available Scripts
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+# Start dev server
+npm run dev
+
+# Build the project
+npm run build
+
+# Preview production build
+npm run preview
+
+# Run ESLint
+npm run lint
+
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+⚠️ Due to dependency conflicts with ESLint plugins, install dependencies with:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+npm install --legacy-peer-deps
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+or use script npm run install-deps
+
+## Routing
+
+The app uses React Router v7 with a centralized route dictionary (src/shared/config/routes.ts). Current pages:
+
+Home / Dashboard – main app interface
+Habit Detail – view and edit individual habits
+Auth – login and signup
+
+Add new routes by updating the ROUTES object and AppRoutes component.
+
+## Styling
+
+modular SCSS: each component/page has its own .module.scss for scoped styles.
+Global variables and mixins live in src/shared/styles/.
+
+## State Management
+
+Zustand handles app state in a lightweight, scalable way.
+Store modules follow the FSD structure under entities/ and features/.
+
+## Linting
+
+ESLint is configured for TypeScript + React + Hooks + Prettier.
+Use VSCode ESLint plugin for real-time linting.
