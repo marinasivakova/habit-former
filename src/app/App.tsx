@@ -1,14 +1,14 @@
-import { BrowserRouter } from "react-router-dom";
+import { HashRouter } from "react-router-dom";
 import AppRoutes from "./AppRoutes";
 import { ThemeProvider } from "@/shared/ui/theme";
 
 function App() {
     return (
-        <BrowserRouter>
+        <HashRouter>
             <ThemeProvider>
                 <AppRoutes />
             </ThemeProvider>
-        </BrowserRouter>
+        </HashRouter>
     );
 }
 
