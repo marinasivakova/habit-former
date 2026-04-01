@@ -1,10 +1,13 @@
 import { BrowserRouter } from "react-router-dom";
 import AppRoutes from "./AppRoutes";
+import { ThemeProvider } from "@/shared/ui/theme";
 
 function App() {
     return (
         <BrowserRouter>
-            <AppRoutes />
+            <ThemeProvider>
+                <AppRoutes />
+            </ThemeProvider>
         </BrowserRouter>
     );
 }

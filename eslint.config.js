@@ -39,6 +39,14 @@ export default [
             // Good defaults for your stack
             "@typescript-eslint/no-unused-vars": ["warn"],
             "@typescript-eslint/no-explicit-any": "warn",
+
+            // Prettier
+            "prettier/prettier": [
+                "error",
+                {
+                    endOfLine: "auto",
+                },
+            ],
         },
     },
 ];
