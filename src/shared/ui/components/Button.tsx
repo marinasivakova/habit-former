@@ -4,7 +4,7 @@ import { typography } from "../tokens/typography";
 import { spacing } from "../tokens/spacing";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-    variant?: "primary" | "secondary";
+    variant?: "primary" | "secondary" | "tab";
 }
 
 export const Button: FC<ButtonProps> = ({
@@ -20,31 +20,20 @@ export const Button: FC<ButtonProps> = ({
         fontSize: typography.sizes.md,
         fontWeight: typography.weights.medium,
         padding: `${spacing.sm} ${spacing.md}`,
-        borderRadius: "8px",
+        borderRadius: "16px",
         border: "none",
         cursor: "pointer",
         transition: "background-color 0.2s ease",
     };
 
-    // const variantStyle =
-    //     variant === "primary"
-    //         ? {
-    //               backgroundColor: colors.primary,
-    //               color: colors.text,
-    //               ":hover": { backgroundColor: colors.primaryHover },
-    //           }
-    //         : {
-    //               backgroundColor: colors.surface,
-    //               color: colors.text,
-    //               border: `1px solid ${colors.border}`,
-    //           };
-
     const getStyle = () => {
         switch (variant) {
             case "primary":
                 return {
-                    backgroundColor: colors.primary,
+                    background: `linear-gradient(270deg, ${colors.primary}, ${colors.primaryHover}, ${colors.primary})`,
+                    backgroundSize: "600% 600%",
                     color: colors.text,
+                    animation: "shimmer 3s ease infinite",
                 };
             case "secondary":
                 return {
@@ -56,6 +45,7 @@ export const Button: FC<ButtonProps> = ({
                 return {};
         }
     };
+
     const variantStyle = getStyle();
 
     return (

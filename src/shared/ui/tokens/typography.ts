@@ -1,5 +1,5 @@
 export const typography = {
-    fontFamily: "Inter, sans-serif",
+    fontFamily: "Trebuchet MS, sans-serif",
     sizes: {
         sm: "0.875rem",
         md: "1rem",

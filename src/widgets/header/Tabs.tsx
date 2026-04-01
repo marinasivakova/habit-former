@@ -30,13 +30,22 @@ export const Tabs: FC<TabsProps> = ({ tabs }) => {
                 return (
                     <Button
                         key={tab.route}
+                        variant="tab"
                         onClick={() => navigate(tab.route)}
                         style={{
-                            cursor: "pointer",
                             color: isActive ? colors.text : colors.mutedText,
-                            border: "none",
                             fontWeight: isActive ? 700 : 500,
-                            transition: "background-color 0.2s ease",
+                            borderBottom: isActive
+                                ? `3px solid ${colors.primary}`
+                                : "3px solid transparent",
+                            backgroundColor: "transparent",
+                            borderRadius: 0,
+                            padding: "12px 24px",
+                            marginRight: "4px",
+                            transition: "all 0.2s ease",
+                            boxShadow: isActive
+                                ? `0 0 8px ${colors.primary}55` // subtle glow for active tab
+                                : "none",
                         }}
                     >
                         {tab.label}

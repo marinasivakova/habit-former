@@ -1,8 +1,8 @@
 // src/widgets/layouts/MainLayout.tsx
 import { type ReactNode } from "react";
 import { useTheme } from "@/shared/ui/theme";
-import { Button } from "@/shared/ui/components/Button";
 import { Header } from "../header/Header";
+import { typography } from "@/shared/ui/tokens/typography";
 
 interface MainLayoutProps {
     children: ReactNode;
@@ -19,6 +19,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                 minHeight: "100vh",
                 display: "flex",
                 flexDirection: "column",
+                fontFamily: typography.fontFamily,
             }}
         >
             <Header />

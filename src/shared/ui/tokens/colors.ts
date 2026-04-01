@@ -3,8 +3,8 @@ export const colors = {
     dark: {
         background: "#121212",
         surface: "#1E1E2F",
-        primary: "#9B5DE5",
-        primaryHover: "#7A3BCF",
+        primary: "#a772e8",
+        primaryHover: "#6230a4",
         text: "#E0E0E0",
         mutedText: "#A0A0A0",
         border: "#2C2C3C",
