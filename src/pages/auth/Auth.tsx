@@ -1,5 +1,6 @@
 import { login } from "@/features/auth/login";
 import { Button } from "@/shared/ui/components/Button";
+import { InputField } from "@/shared/ui/components/InputField";
 import { useTheme } from "@/shared/ui/theme";
 import { typography } from "@/shared/ui/tokens/typography";
 import { useState } from "react";
@@ -42,7 +43,7 @@ export default function AuthPage() {
             >
                 <h1 style={{ color: colors.text }}>Login/Signup</h1>
 
-                <input
+                <InputField
                     type="text"
                     placeholder="User ID"
                     onChange={(e) => setUser(e.target.value)}

@@ -5,7 +5,7 @@ import { Tabs } from "./Tabs";
 import { logout } from "@/features/auth/logout";
 
 const tabs = [
-    { label: "Dashboard", route: ROUTES.HOME },
+    { label: "Habits", route: ROUTES.HOME },
     // future tabs can be added here
 ];
 

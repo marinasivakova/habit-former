@@ -1,39 +1,51 @@
 import { type FC, type ButtonHTMLAttributes } from "react";
 import { useTheme } from "../theme";
-import { typography } from "../tokens/typography";
-import { spacing } from "../tokens/spacing";
+import styles from "./button.module.scss";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     variant?: "primary" | "secondary" | "tab";
+    isActive?: boolean;
 }
 
 export const Button: FC<ButtonProps> = ({
     variant = "primary",
+    isActive = false,
     style,
     children,
     ...props
 }) => {
     const { colors } = useTheme();
 
-    const baseStyle = {
-        fontFamily: typography.fontFamily,
-        fontSize: typography.sizes.md,
-        fontWeight: typography.weights.medium,
-        padding: `${spacing.sm} ${spacing.md}`,
-        borderRadius: "16px",
-        border: "none",
-        cursor: "pointer",
-        transition: "background-color 0.2s ease",
-    };
+    // Dynamic styles for theme colors
+    const themeStyles: React.CSSProperties = {
+        "--primary-color": colors.primary,
+        "--primary-hover": colors.primaryHover,
+        "--secondary-bg": colors.surface,
+        "--secondary-text": colors.text,
+        "--secondary-border": colors.border,
+        "--tab-text": colors.text,
+        "--primary-gradient": `linear-gradient(270deg, ${colors.primary}, ${colors.primaryHover}, ${colors.primary})`,
+        color: variant === "primary" ? colors.text : undefined,
+    } as React.CSSProperties;
 
-    const getStyle = () => {
+    const className = [
+        styles.button,
+        variant === "primary" ? styles.primary : "",
+        variant === "secondary" ? styles.secondary : "",
+        variant === "tab" ? styles.tab : "",
+        isActive && variant === "tab" ? styles.active : "",
+    ]
+        .filter(Boolean)
+        .join(" ");
+
+    const getStyle = (): React.CSSProperties => {
         switch (variant) {
             case "primary":
                 return {
-                    background: `linear-gradient(270deg, ${colors.primary}, ${colors.primaryHover}, ${colors.primary})`,
-                    backgroundSize: "600% 600%",
+                    backgroundColor: colors.primary, // base color
                     color: colors.text,
-                    animation: "shimmer 3s ease infinite",
+                    borderRadius: "16px",
+                    transition: "all 0.2s ease",
                 };
             case "secondary":
                 return {
@@ -46,10 +58,31 @@ export const Button: FC<ButtonProps> = ({
         }
     };
 
-    const variantStyle = getStyle();
-
     return (
-        <button style={{ ...baseStyle, ...variantStyle, ...style }} {...props}>
+        <button
+            className={className}
+            style={{
+                ...themeStyles,
+                ...getStyle(),
+                ...style,
+            }}
+            onMouseEnter={(e) => {
+                if (variant === "primary") {
+                    const el = e.currentTarget;
+                    el.style.background = `linear-gradient(270deg, ${colors.primary}, ${colors.primaryHover}, ${colors.primary})`;
+                    el.style.backgroundSize = "600% 600%";
+                    el.style.animation = "shimmer 3s ease infinite";
+                }
+            }}
+            onMouseLeave={(e) => {
+                if (variant === "primary") {
+                    const el = e.currentTarget;
+                    el.style.background = colors.primary;
+                    el.style.animation = "none";
+                }
+            }}
+            {...props}
+        >
             {children}
         </button>
     );

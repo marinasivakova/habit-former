@@ -1,3 +1,9 @@
+import { HabitList } from "@/widgets/habitList/HabitList";
+
 export default function DashboardPage() {
-    return <div>Home</div>;
+    return (
+        <div>
+            <HabitList />
+        </div>
+    );
 }

@@ -39,8 +39,8 @@ export const Tabs: FC<TabsProps> = ({ tabs }) => {
                                 ? `3px solid ${colors.primary}`
                                 : "3px solid transparent",
                             backgroundColor: "transparent",
-                            borderRadius: 0,
-                            padding: "12px 24px",
+                            borderRadius: "8px",
+                            padding: "8px 12px",
                             marginRight: "4px",
                             transition: "all 0.2s ease",
                             boxShadow: isActive

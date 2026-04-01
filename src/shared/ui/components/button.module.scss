@@ -1,0 +1,60 @@
+.button {
+    font-family: "Inter", sans-serif;
+    font-weight: 500;
+    font-size: 1rem;
+    padding: 8px 16px;
+    border-radius: 16px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.primary {
+    /* Colors will be applied via inline style */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    background-color: var(--primary-color);
+}
+
+.primary:hover {
+    animation: shimmer 3s ease infinite;
+    background: var(--primary-gradient);
+}
+
+.secondary {
+    background-color: var(--secondary-bg);
+    color: var(--secondary-text);
+    border: 1px solid var(--secondary-border);
+}
+
+.secondary:hover {
+    box-shadow: 0 0 8px var(--primary-color);
+}
+
+.tab {
+    background: transparent;
+    color: var(--tab-text);
+    border-radius: 0;
+    padding: 12px 24px;
+    border-bottom: 3px solid transparent;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.tab.active {
+    border-bottom-color: var(--primary-color);
+    box-shadow: 0 0 8px var(--primary-color);
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
