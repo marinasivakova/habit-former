@@ -1,0 +1,51 @@
+// src/widgets/layouts/MainLayout.module.scss
+
+.mainLight {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+    background: linear-gradient(135deg, #f3e5ff, #d1c4ff); // soft light purple
+    color: #3a0ca3; // deep purple text
+    scrollbar-width: thin;
+    scrollbar-color: #9d4edd #e0c3fc;
+
+    &::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: #e0c3fc;
+        border-radius: 4px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background-color: #9d4edd;
+        border-radius: 4px;
+        border: 2px solid #e0c3fc;
+    }
+}
+
+.mainDark {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+    background: linear-gradient(135deg, #1e0b3c, #3a0ca3); // deep dark purples
+    color: #f0e6ff; // light text
+    scrollbar-width: thin;
+    scrollbar-color: #6a0dad #2e026d;
+
+    &::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: #2e026d;
+        border-radius: 4px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background-color: #6a0dad;
+        border-radius: 4px;
+        border: 2px solid #2e026d;
+    }
+}

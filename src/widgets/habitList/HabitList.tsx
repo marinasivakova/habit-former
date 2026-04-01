@@ -10,8 +10,6 @@ export const HabitList = () => {
     const toggleHabitDone = useHabitsStore((state) => state.toggleHabitDone);
     const { colors } = useTheme();
 
-    console.log(habits);
-
     const today = new Date().toISOString().split("T")[0];
 
     return (
@@ -21,11 +19,20 @@ export const HabitList = () => {
                 flexDirection: "column",
                 alignItems: "center",
                 padding: "32px",
+                borderRadius: "16px",
+                backgroundColor: colors.surface,
+                boxShadow: `0 4px 12px ${colors.primary}33`,
+                maxWidth: "600px",
+                width: "100%",
+                margin: "auto",
             }}
         >
             <h2 style={{ color: colors.text, marginBottom: "24px" }}>
-                Habit List - {dayjs(today).format("MMMM D, YYYY")}
+                Habit List
             </h2>
+            <h3 style={{ color: colors.mutedText }}>
+                {dayjs(today).format("MMMM D, YYYY")}
+            </h3>
             <CreateHabitModal />
 
             {habits.length === 0 && (
