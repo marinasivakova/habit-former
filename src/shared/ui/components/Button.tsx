@@ -1,6 +1,6 @@
 import { type FC, type ButtonHTMLAttributes } from "react";
 import { useTheme } from "../theme";
-import styles from "./button.module.scss";
+import cls from "./button.module.scss";
 import { typography } from "../tokens";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -33,11 +33,11 @@ export const Button: FC<ButtonProps> = ({
     } as React.CSSProperties;
 
     const className = [
-        styles.button,
-        variant === "primary" ? styles.primary : "",
-        variant === "secondary" ? styles.secondary : "",
-        variant === "tab" ? styles.tab : "",
-        isActive && variant === "tab" ? styles.active : "",
+        cls.button,
+        variant === "primary" ? cls.primary : "",
+        variant === "secondary" ? cls.secondary : "",
+        variant === "tab" ? cls.tab : "",
+        isActive && variant === "tab" ? cls.active : "",
     ]
         .filter(Boolean)
         .join(" ");

@@ -2,7 +2,7 @@ import { type ReactNode } from "react";
 import { useTheme } from "@/shared/ui/theme";
 import { Header } from "../header/Header";
 import { typography } from "@/shared/ui/tokens/typography";
-import styles from "./MainLayout.module.scss";
+import cls from "./MainLayout.module.scss";
 
 interface MainLayoutProps {
     children: ReactNode;
@@ -23,11 +23,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
             }}
         >
             <Header />
-            <main
-                className={
-                    theme === "dark" ? styles.mainDark : styles.mainLight
-                }
-            >
+            <main className={theme === "dark" ? cls.mainDark : cls.mainLight}>
                 {children}
             </main>
         </div>
