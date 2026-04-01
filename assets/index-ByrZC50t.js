@@ -9919,7 +9919,7 @@ var import_client = require_client();
 //#region \0vite/preload-helper.js
 var scriptRel = "modulepreload";
 var assetsURL = function(dep) {
-	return "https://github.com/marinasivakova/habit-former/" + dep;
+	return "/habit-former/" + dep;
 };
 var seen = {};
 var __vitePreload = function preload(baseModule, deps, importerUrl) {
