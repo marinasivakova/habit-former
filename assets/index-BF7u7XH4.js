@@ -12123,13 +12123,20 @@ var useHabitsStore = create()((set) => ({
 		set((state) => {
 			const updatedHabits = state.habits.map((habit) => {
 				if (habit.id !== habitId) return habit;
-				const existing = habit.entries.find((e) => e.date === date);
-				if (existing) existing.done = !existing.done;
-				else habit.entries.push({
-					date,
-					done: true
-				});
-				return habit;
+				if (habit.entries.find((e) => e.date === date)) return {
+					...habit,
+					entries: habit.entries.map((e) => e.date === date ? {
+						...e,
+						done: !e.done
+					} : e)
+				};
+				return {
+					...habit,
+					entries: [...habit.entries, {
+						date,
+						done: true
+					}]
+				};
 			});
 			createUserStorage(userId).setItem(updatedHabits);
 			return { habits: updatedHabits };
@@ -12387,7 +12394,6 @@ var Modal = ({ isOpen, onClose, title, children }) => {
 				backgroundColor: colors.surface,
 				borderRadius: "16px",
 				padding: "24px",
-				minWidth: "320px",
 				maxWidth: "600px",
 				boxShadow: `0 0 24px ${colors.primary}55`,
 				display: "flex",
@@ -12826,7 +12832,6 @@ var HabitList = () => {
 			backgroundColor: colors.surface,
 			boxShadow: `0 4px 12px ${colors.primary}33`,
 			maxWidth: "600px",
-			width: "100%",
 			margin: "auto"
 		},
 		children: [
@@ -12870,10 +12875,7 @@ var HabitList = () => {
 //#endregion
 //#region src/pages/dashboardPage/Dashboard.tsx
 function DashboardPage() {
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-		style: { padding: "24px" },
-		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(HabitList, {})
-	});
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(HabitList, {});
 }
 //#endregion
 //#region src/pages/habitDetailPage/HabitDetail.tsx
@@ -12910,7 +12912,6 @@ function AuthPage() {
 			style: {
 				padding: "36px",
 				margin: "auto",
-				maxWidth: "400px",
 				textAlign: "center",
 				gap: "16px",
 				display: "flex",
@@ -13013,8 +13014,8 @@ var Header = () => {
 	}) });
 };
 var MainLayout_module_default = {
-	mainLight: "_mainLight_142qa_1",
-	mainDark: "_mainDark_142qa_23"
+	mainLight: "_mainLight_7zvkb_1",
+	mainDark: "_mainDark_7zvkb_23"
 };
 //#endregion
 //#region src/widgets/layouts/MainLayout.tsx
