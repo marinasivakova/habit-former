@@ -73,6 +73,23 @@ body {
   100% {
     background-position: 0% 50%;
   }
+}/* header.module.scss */
+._logoWrapper_vggih_2 {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+._logoImg_vggih_13 {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.2);
 }._mainLight_7zvkb_1 {
   flex: 1;
   padding: 24px;

@@ -12980,6 +12980,13 @@ var logout = () => {
 	useHabitsStore.setState({ habits: [] });
 };
 //#endregion
+//#region src/shared/assets/logo.svg
+var logo_default = "/habit-former/assets/logo-Cbcn0Fzr.svg";
+var header_module_default = {
+	logoWrapper: "_logoWrapper_vggih_2",
+	logoImg: "_logoImg_vggih_13"
+};
+//#endregion
 //#region src/widgets/header/Header.tsx
 var tabs = [{
 	label: "Habits",
@@ -12987,10 +12994,14 @@ var tabs = [{
 }];
 var Header = () => {
 	const { colors } = useTheme();
+	const navigate = useNavigate();
 	const handleLogout = () => {
 		logout();
 	};
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
+	const goHome = () => {
+		navigate(ROUTES.HOME);
+	};
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
 		style: {
 			backgroundColor: colors.surface,
 			padding: "16px 24px",
@@ -13000,9 +13011,14 @@ var Header = () => {
 			borderBottom: `1px solid ${colors.border}`
 		},
 		children: [
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
-				style: { margin: 0 },
-				children: "Habit Former"
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				onClick: goHome,
+				className: header_module_default.logoWrapper,
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+					src: logo_default,
+					alt: "habit-former",
+					className: header_module_default.logoImg
+				})
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Tabs, { tabs }),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
@@ -13011,7 +13027,7 @@ var Header = () => {
 				children: "Logout"
 			})
 		]
-	}) });
+	});
 };
 var MainLayout_module_default = {
 	mainLight: "_mainLight_7zvkb_1",
