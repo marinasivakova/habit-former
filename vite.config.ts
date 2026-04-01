@@ -13,7 +13,7 @@ export default defineConfig({
             typescript: true,
         }),
     ],
-    base: "https://github.com/marinasivakova/habit-former",
+    base: "/habit-former",
     resolve: {
         alias: {
             "@": path.resolve(__dirname, "src"),
