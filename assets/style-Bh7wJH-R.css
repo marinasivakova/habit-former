@@ -1,0 +1,118 @@
+html,
+body {
+  padding: 0;
+  margin: 0;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}._button_1qwrc_1 {
+  font-family: "Inter", sans-serif;
+  font-weight: 500;
+  font-size: 1rem;
+  padding: 8px 16px;
+  border-radius: 16px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+._primary_1qwrc_14 {
+  /* Colors will be applied via inline style */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  background-color: var(--primary-color);
+}
+
+._primary_1qwrc_14:hover {
+  animation: _shimmer_1qwrc_1 3s ease infinite;
+  background: var(--primary-gradient);
+}
+
+._secondary_1qwrc_25 {
+  background-color: var(--secondary-bg);
+  color: var(--secondary-text);
+  border: 1px solid var(--secondary-border);
+}
+
+._secondary_1qwrc_25:hover {
+  box-shadow: 0 0 8px var(--primary-color);
+}
+
+._tab_1qwrc_35 {
+  background: transparent;
+  color: var(--tab-text);
+  border-radius: 0;
+  padding: 12px 24px;
+  border-bottom: 3px solid transparent;
+  font-weight: 500 !important;
+  transition: all 0.2s ease;
+}
+
+._tab_1qwrc_35._active_1qwrc_45 {
+  border-bottom-color: var(--primary-color);
+  box-shadow: 0 0 8px var(--primary-color);
+}
+
+@keyframes _shimmer_1qwrc_1 {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}._mainLight_142qa_1 {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  background: linear-gradient(135deg, #f3e5ff, #d1c4ff);
+  color: #3a0ca3;
+  scrollbar-width: thin;
+  scrollbar-color: #9d4edd #e0c3fc;
+}
+._mainLight_142qa_1::-webkit-scrollbar {
+  width: 8px;
+}
+._mainLight_142qa_1::-webkit-scrollbar-track {
+  background: #e0c3fc;
+  border-radius: 4px;
+}
+._mainLight_142qa_1::-webkit-scrollbar-thumb {
+  background-color: #9d4edd;
+  border-radius: 4px;
+  border: 2px solid #e0c3fc;
+}
+
+._mainDark_142qa_23 {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  background: linear-gradient(135deg, #1e0b3c, #3a0ca3);
+  color: #f0e6ff;
+  scrollbar-width: thin;
+  scrollbar-color: #6a0dad #2e026d;
+}
+._mainDark_142qa_23::-webkit-scrollbar {
+  width: 8px;
+}
+._mainDark_142qa_23::-webkit-scrollbar-track {
+  background: #2e026d;
+  border-radius: 4px;
+}
+._mainDark_142qa_23::-webkit-scrollbar-thumb {
+  background-color: #6a0dad;
+  border-radius: 4px;
+  border: 2px solid #2e026d;
+}/*$vite$:1*/
