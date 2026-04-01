@@ -29,7 +29,6 @@ export default function AuthPage() {
                 style={{
                     padding: "36px",
                     margin: "auto",
-                    maxWidth: "400px",
                     textAlign: "center",
                     gap: "16px",
                     display: "flex",

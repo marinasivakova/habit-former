@@ -33,7 +33,6 @@ export const Modal: FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
                     backgroundColor: colors.surface,
                     borderRadius: "16px",
                     padding: "24px",
-                    minWidth: "320px",
                     maxWidth: "600px",
                     boxShadow: `0 0 24px ${colors.primary}55`,
                     display: "flex",

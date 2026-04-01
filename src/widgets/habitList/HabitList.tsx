@@ -23,7 +23,7 @@ export const HabitList = () => {
                 backgroundColor: colors.surface,
                 boxShadow: `0 4px 12px ${colors.primary}33`,
                 maxWidth: "600px",
-                width: "100%",
+
                 margin: "auto",
             }}
         >
