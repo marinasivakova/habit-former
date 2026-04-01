@@ -61,10 +61,22 @@ export const useHabitsStore = create<HabitsState>()((set) => ({
         set((state) => {
             const updatedHabits = state.habits.map((habit) => {
                 if (habit.id !== habitId) return habit;
+
                 const existing = habit.entries.find((e) => e.date === date);
-                if (existing) existing.done = !existing.done;
-                else habit.entries.push({ date, done: true });
-                return habit;
+
+                if (existing) {
+                    return {
+                        ...habit,
+                        entries: habit.entries.map((e) =>
+                            e.date === date ? { ...e, done: !e.done } : e,
+                        ),
+                    };
+                }
+
+                return {
+                    ...habit,
+                    entries: [...habit.entries, { date, done: true }],
+                };
             });
 
             createUserStorage(userId).setItem(updatedHabits);
