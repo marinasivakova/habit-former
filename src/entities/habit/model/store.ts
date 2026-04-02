@@ -105,7 +105,9 @@ export const useHabitsStore = create<HabitsState>()((set) => ({
           return {
             ...habit,
             entries: habit.entries.map((e) =>
-              e.date === date ? { ...e, done: !e.done } : e
+              e.date === date
+                ? { ...e, done: !e.done, amountEarned: e.done ? 0 : habit.pay }
+                : { ...e, amountEarned: e.done ? 0 : habit.pay }
             ),
           };
         }
