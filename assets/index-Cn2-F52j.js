@@ -10541,7 +10541,7 @@ function useLocation() {
 	return import_react.useContext(LocationContext).location;
 }
 var navigateEffectWarning = `You should call navigate() in a React.useEffect(), not when your component is first rendered.`;
-function useIsomorphicLayoutEffect(cb) {
+function useIsomorphicLayoutEffect$1(cb) {
 	if (!import_react.useContext(NavigationContext).static) import_react.useLayoutEffect(cb);
 }
 function useNavigate() {
@@ -10556,7 +10556,7 @@ function useNavigateUnstable() {
 	let { pathname: locationPathname } = useLocation();
 	let routePathnamesJson = JSON.stringify(getResolveToMatches(matches));
 	let activeRef = import_react.useRef(false);
-	useIsomorphicLayoutEffect(() => {
+	useIsomorphicLayoutEffect$1(() => {
 		activeRef.current = true;
 	});
 	return import_react.useCallback((to, options = {}) => {
@@ -10877,7 +10877,7 @@ function useNavigateStable() {
 	let { router } = useDataRouterContext("useNavigate");
 	let id = useCurrentRouteId("useNavigate");
 	let activeRef = import_react.useRef(false);
-	useIsomorphicLayoutEffect(() => {
+	useIsomorphicLayoutEffect$1(() => {
 		activeRef.current = true;
 	});
 	return import_react.useCallback(async (to, options = {}) => {
@@ -12103,16 +12103,42 @@ var createUserStorage = (userId) => {
 };
 var useHabitsStore = create()((set) => ({
 	habits: [],
-	addHabit: (title) => {
+	addHabit: (title, difficulty, pay) => {
 		const userId = useAuthStore.getState().activeUserId;
 		if (!userId) return;
 		const newHabit = {
 			id: crypto.randomUUID(),
 			title,
+			difficulty,
+			pay,
 			entries: []
 		};
 		set((state) => {
 			const updatedHabits = [...state.habits, newHabit];
+			createUserStorage(userId).setItem(updatedHabits);
+			return { habits: updatedHabits };
+		});
+	},
+	removeHabit: (habitId) => {
+		const userId = useAuthStore.getState().activeUserId;
+		if (!userId) return;
+		set((state) => {
+			const updatedHabits = state.habits.filter((habit) => habit.id !== habitId);
+			createUserStorage(userId).setItem(updatedHabits);
+			return { habits: updatedHabits };
+		});
+	},
+	editHabit: (habitId, changes) => {
+		const userId = useAuthStore.getState().activeUserId;
+		if (!userId) return;
+		set((state) => {
+			const updatedHabits = state.habits.map((habit) => {
+				if (habit.id !== habitId) return habit;
+				return {
+					...habit,
+					...changes
+				};
+			});
 			createUserStorage(userId).setItem(updatedHabits);
 			return { habits: updatedHabits };
 		});
@@ -12127,14 +12153,19 @@ var useHabitsStore = create()((set) => ({
 					...habit,
 					entries: habit.entries.map((e) => e.date === date ? {
 						...e,
-						done: !e.done
-					} : e)
+						done: !e.done,
+						amountEarned: e.done ? 0 : habit.pay
+					} : {
+						...e,
+						amountEarned: e.done ? 0 : habit.pay
+					})
 				};
 				return {
 					...habit,
 					entries: [...habit.entries, {
 						date,
-						done: true
+						done: true,
+						amountEarned: habit.pay
 					}]
 				};
 			});
@@ -12285,6 +12316,7 @@ var InputField = ({ label, style, ...props }) => {
 				fontSize: typography.sizes.md,
 				outline: "none",
 				transition: "border-color 0.2s ease, box-shadow 0.2s ease",
+				...props.type === "number" && { MozAppearance: "textfield" },
 				...style
 			},
 			onFocus: (e) => {
@@ -12300,16 +12332,17 @@ var InputField = ({ label, style, ...props }) => {
 	});
 };
 var button_module_default = {
-	button: "_button_1qwrc_1",
-	primary: "_primary_1qwrc_14",
-	shimmer: "_shimmer_1qwrc_1",
-	secondary: "_secondary_1qwrc_25",
-	tab: "_tab_1qwrc_35",
-	active: "_active_1qwrc_45"
+	button: "_button_ummob_1",
+	primary: "_primary_ummob_14",
+	shimmer: "_shimmer_ummob_1",
+	secondary: "_secondary_ummob_25",
+	danger: "_danger_ummob_35",
+	tab: "_tab_ummob_46",
+	active: "_active_ummob_60"
 };
 //#endregion
 //#region src/shared/ui/components/Button.tsx
-var Button = ({ variant = "primary", isActive = false, style, children, ...props }) => {
+var Button = ({ variant = "primary", isActive = false, style, children, danger = false, ...props }) => {
 	const { colors } = useTheme();
 	const themeStyles = {
 		"--primary-color": colors.primary,
@@ -12329,7 +12362,8 @@ var Button = ({ variant = "primary", isActive = false, style, children, ...props
 		variant === "primary" ? button_module_default.primary : "",
 		variant === "secondary" ? button_module_default.secondary : "",
 		variant === "tab" ? button_module_default.tab : "",
-		isActive && variant === "tab" ? button_module_default.active : ""
+		isActive && variant === "tab" ? button_module_default.active : "",
+		danger && button_module_default.danger
 	].filter(Boolean).join(" ");
 	const getStyle = () => {
 		switch (variant) {
@@ -12375,7 +12409,7 @@ var Button = ({ variant = "primary", isActive = false, style, children, ...props
 };
 //#endregion
 //#region src/shared/ui/components/Modal.tsx
-var Modal = ({ isOpen, onClose, title, children }) => {
+var Modal = ({ isOpen, onClose, title, children, actions }) => {
 	const { colors } = useTheme();
 	if (!isOpen) return null;
 	return (0, import_react_dom.createPortal)(/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
@@ -12386,7 +12420,8 @@ var Modal = ({ isOpen, onClose, title, children }) => {
 			display: "flex",
 			justifyContent: "center",
 			alignItems: "center",
-			zIndex: 9999
+			zIndex: 9999,
+			fontFamily: typography.fontFamily
 		},
 		onClick: onClose,
 		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
@@ -12417,29 +12452,165 @@ var Modal = ({ isOpen, onClose, title, children }) => {
 					},
 					children
 				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-					style: { alignSelf: "flex-end" },
-					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					style: {
+						alignSelf: "flex-end",
+						display: "flex",
+						gap: "8px"
+					},
+					children: [actions, /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
 						variant: "secondary",
 						onClick: onClose,
 						children: "Close"
-					})
+					})]
 				})
 			]
 		})
 	}), document.body);
 };
 //#endregion
+//#region src/entities/habit/utils/habitUtils.ts
+var habitTypeMap = {
+	"0": {
+		difficulty: "easy",
+		minPay: 10,
+		maxPay: 50,
+		defaultPay: 25
+	},
+	"1": {
+		difficulty: "medium",
+		minPay: 50,
+		maxPay: 100,
+		defaultPay: 75
+	},
+	"2": {
+		difficulty: "hard",
+		minPay: 100,
+		maxPay: 200,
+		defaultPay: 150
+	}
+};
+//#endregion
+//#region src/shared/ui/components/SelectField.tsx
+var SelectField = ({ label, options, value, placeholder = "Select...", onChange }) => {
+	const { colors } = useTheme();
+	const [open, setOpen] = (0, import_react.useState)(false);
+	const ref = (0, import_react.useRef)(null);
+	const selected = options.find((o) => o.value === value);
+	(0, import_react.useEffect)(() => {
+		const handleClickOutside = (e) => {
+			if (!ref.current?.contains(e.target)) setOpen(false);
+		};
+		document.addEventListener("mousedown", handleClickOutside);
+		return () => document.removeEventListener("mousedown", handleClickOutside);
+	}, []);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		ref,
+		style: {
+			display: "flex",
+			flexDirection: "column",
+			marginBottom: spacing.md,
+			position: "relative"
+		},
+		children: [
+			label && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
+				style: {
+					marginBottom: spacing.xs,
+					color: colors.mutedText,
+					fontFamily: typography.fontFamily,
+					fontSize: typography.sizes.sm
+				},
+				children: label
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				onClick: () => setOpen((p) => !p),
+				style: {
+					padding: `${spacing.sm} ${spacing.md}`,
+					borderRadius: 12,
+					border: `1px solid ${open ? colors.primary : colors.border}`,
+					backgroundColor: colors.surface,
+					color: selected ? colors.text : colors.mutedText,
+					fontFamily: typography.fontFamily,
+					fontSize: typography.sizes.md,
+					cursor: "pointer",
+					display: "flex",
+					alignItems: "center",
+					justifyContent: "space-between",
+					transition: "all 0.2s ease",
+					boxShadow: open ? `0 0 8px ${colors.primary}55` : "none"
+				},
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: selected?.label || placeholder }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+					style: {
+						transition: "transform 0.2s ease",
+						transform: open ? "rotate(180deg)" : "rotate(0deg)",
+						fontSize: 12,
+						opacity: .7
+					},
+					children: "▼"
+				})]
+			}),
+			open && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				style: {
+					position: "absolute",
+					top: "100%",
+					marginTop: 6,
+					width: "100%",
+					borderRadius: 12,
+					border: `1px solid ${colors.border}`,
+					backgroundColor: colors.surface,
+					boxShadow: `0 8px 24px rgba(0,0,0,0.2)`,
+					overflow: "hidden",
+					zIndex: 10,
+					animation: "fadeIn 0.15s ease"
+				},
+				children: options.map((opt) => {
+					const isActive = opt.value === value;
+					return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+						onClick: () => {
+							onChange?.(opt.value);
+							setOpen(false);
+						},
+						style: {
+							padding: `${spacing.sm} ${spacing.md}`,
+							cursor: "pointer",
+							backgroundColor: isActive ? `${colors.primary}22` : "transparent",
+							color: isActive ? colors.primary : colors.text,
+							transition: "all 0.15s ease"
+						},
+						onMouseEnter: (e) => {
+							if (!isActive) e.currentTarget.style.backgroundColor = colors.primary + "22";
+						},
+						onMouseLeave: (e) => {
+							if (!isActive) e.currentTarget.style.backgroundColor = "transparent";
+						},
+						children: opt.label
+					}, opt.value);
+				})
+			})
+		]
+	});
+};
+//#endregion
 //#region src/widgets/habitList/CreateHabitModal.tsx
 var CreateHabitModal = () => {
 	const [open, setOpen] = (0, import_react.useState)(false);
 	const [title, setTitle] = (0, import_react.useState)("");
+	const [difficulty, setDifficulty] = (0, import_react.useState)(1);
+	const [pay, setPay] = (0, import_react.useState)(habitTypeMap["1"].defaultPay);
 	const addHabit = useHabitsStore((state) => state.addHabit);
 	const handleSubmit = () => {
-		if (title.trim() === "") return;
-		addHabit(title.trim());
+		if (title.trim() === "" || isNaN(difficulty) || isNaN(pay)) return;
+		addHabit(title.trim(), difficulty, pay);
 		setTitle("");
 		setOpen(false);
+	};
+	const options = Object.keys(habitTypeMap).map((key) => ({
+		value: key,
+		label: habitTypeMap[key].difficulty
+	}));
+	const onChangeDifficulty = (difficulty) => {
+		setDifficulty(Number(difficulty));
+		setPay(habitTypeMap[difficulty].defaultPay);
 	};
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
 		onClick: () => setOpen(true),
@@ -12448,20 +12619,47 @@ var CreateHabitModal = () => {
 		isOpen: open,
 		onClose: () => setOpen(false),
 		title: "Create New Habit",
-		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(InputField, {
-			label: "Habit name",
-			value: title,
-			onChange: (e) => setTitle(e.target.value)
-		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
-			onClick: handleSubmit,
-			children: "Add Habit"
-		})]
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(InputField, {
+				label: "Habit name",
+				value: title,
+				onChange: (e) => setTitle(e.target.value)
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectField, {
+				label: "Difficulty",
+				options,
+				value: difficulty.toString(),
+				onChange: (difficulty) => onChangeDifficulty(difficulty)
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(InputField, {
+				label: "Pay",
+				type: "number",
+				value: pay,
+				onChange: (e) => {
+					const val = e.target.value;
+					if (!isNaN(Number(val))) setPay(Number(val));
+				},
+				onBlur: (e) => {
+					const val = Number(e.target.value);
+					const min = habitTypeMap[difficulty].minPay;
+					const max = habitTypeMap[difficulty].maxPay;
+					if (!isNaN(val)) setPay(Math.min(Math.max(val, min), max));
+				},
+				max: habitTypeMap[difficulty].maxPay,
+				min: habitTypeMap[difficulty].minPay
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+				onClick: handleSubmit,
+				children: "Add Habit"
+			})
+		]
 	})] });
 };
 //#endregion
 //#region src/widgets/habitList/HabitItem.tsx
-var HabitItem = ({ title, done, onToggle }) => {
+var HabitItem = ({ title, done, onToggle, id }) => {
 	const { colors } = useTheme();
+	const navigate = useNavigate();
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 		style: {
 			display: "flex",
@@ -12485,6 +12683,7 @@ var HabitItem = ({ title, done, onToggle }) => {
 			el.style.transform = "scale(1)";
 			el.style.boxShadow = `0 4px 12px ${colors.primary}33`;
 		},
+		onClick: () => navigate(`/habit/${id}`),
 		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 			style: { color: done ? colors.mutedText : colors.text },
 			children: title
@@ -12865,7 +13064,8 @@ var HabitList = () => {
 					return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(HabitItem, {
 						title: habit.title,
 						done,
-						onToggle: () => toggleHabitDone(habit.id, today)
+						onToggle: () => toggleHabitDone(habit.id, today),
+						id: habit.id
 					}, habit.id);
 				})
 			})
@@ -12878,10 +13078,305 @@ function DashboardPage() {
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(HabitList, {});
 }
 //#endregion
+//#region src/pages/habitDetailPage/utls/streakCounter.ts
+function calculateStreak(entries) {
+	const sorted = [...entries].filter((e) => e.done).sort((a, b) => a.date < b.date ? 1 : -1);
+	let streak = 0;
+	let currentDate = /* @__PURE__ */ new Date();
+	for (const entry of sorted) {
+		const entryDate = new Date(entry.date);
+		if ((currentDate.setHours(0, 0, 0, 0) - entryDate.setHours(0, 0, 0, 0)) / (1e3 * 60 * 60 * 24) === streak) streak++;
+		else break;
+	}
+	return streak;
+}
+//#endregion
+//#region src/shared/hooks/useIsomorphicLayoutEffect.ts
+var useIsomorphicLayoutEffect = typeof window !== "undefined" ? import_react.useLayoutEffect : import_react.useEffect;
+//#endregion
+//#region src/shared/hooks/useEventListener.ts
+function useEventListener(eventName, handler, element, options) {
+	const savedHandler = (0, import_react.useRef)(handler);
+	useIsomorphicLayoutEffect(() => {
+		savedHandler.current = handler;
+	}, [handler]);
+	(0, import_react.useEffect)(() => {
+		const targetElement = element?.current ?? window;
+		if (!(targetElement && targetElement.addEventListener)) return;
+		const listener = (event) => {
+			savedHandler.current(event);
+		};
+		targetElement.addEventListener(eventName, listener, options);
+		return () => {
+			targetElement.removeEventListener(eventName, listener, options);
+		};
+	}, [
+		eventName,
+		element,
+		options
+	]);
+}
+//#endregion
+//#region src/shared/hooks/useClickOutside.ts
+function useOnClickOutside(ref, handler, eventType = "mousedown", eventListenerOptions = {}) {
+	useEventListener(eventType, (event) => {
+		const target = event.target;
+		if (!target || !target.isConnected) return;
+		if (Array.isArray(ref) ? ref.filter((r) => Boolean(r.current)).every((r) => r.current && !r.current.contains(target)) : ref.current && !ref.current.contains(target)) handler(event);
+	}, void 0, eventListenerOptions);
+}
+//#endregion
+//#region src/widgets/habitDetail/MenuDropdown.tsx
+var MenuDropdown = ({ habitId }) => {
+	const dropdownRef = (0, import_react.useRef)(null);
+	const { colors } = useTheme();
+	const [open, setOpen] = (0, import_react.useState)(false);
+	const [editOpen, setEditOpen] = (0, import_react.useState)(false);
+	const [deleteOpen, setDeleteOpen] = (0, import_react.useState)(false);
+	const habit = useHabitsStore((s) => s.habits.find((h) => h.id === habitId));
+	const editHabit = useHabitsStore((s) => s.editHabit);
+	const deleteHabit = useHabitsStore((s) => s.removeHabit);
+	const [title, setTitle] = (0, import_react.useState)(habit?.title ?? "");
+	const [difficulty, setDifficulty] = (0, import_react.useState)(habit?.difficulty ?? 1);
+	const [pay, setPay] = (0, import_react.useState)(habit?.pay ?? 0);
+	(0, import_react.useEffect)(() => {
+		if (habit && editOpen) {
+			setTitle(habit.title);
+			setDifficulty(habit.difficulty);
+			setPay(habit.pay);
+		}
+	}, [habit, editOpen]);
+	const handleClickOutside = () => {
+		setOpen(false);
+	};
+	useOnClickOutside(dropdownRef, handleClickOutside);
+	const navigate = useNavigate();
+	if (!habit) return null;
+	const options = Object.keys(habitTypeMap).map((key) => ({
+		value: key,
+		label: habitTypeMap[key].difficulty
+	}));
+	const handleEdit = () => {
+		if (title.trim() === "" || isNaN(difficulty) || isNaN(pay)) return;
+		editHabit(habitId, {
+			title,
+			difficulty,
+			pay
+		});
+		setEditOpen(false);
+	};
+	const handleDelete = () => {
+		deleteHabit(habitId);
+		setDeleteOpen(false);
+		navigate("/");
+	};
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		style: {
+			position: "absolute",
+			top: 0,
+			right: 0
+		},
+		ref: dropdownRef,
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+				onClick: () => setOpen((p) => !p),
+				style: {
+					padding: "16px",
+					fontSize: "1.5rem",
+					color: colors.text,
+					cursor: "pointer",
+					writingMode: "vertical-lr"
+				},
+				children: "⋯"
+			}),
+			open && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				style: {
+					position: "absolute",
+					top: "48px",
+					right: "8px",
+					background: colors.surface,
+					border: `1px solid ${colors.border}`,
+					borderRadius: "12px",
+					boxShadow: `0 4px 12px ${colors.primary}33`,
+					overflow: "hidden",
+					zIndex: 10
+				},
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+					style: itemStyle(colors),
+					onClick: () => {
+						setEditOpen(true);
+						setOpen(false);
+					},
+					children: "Edit"
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+					style: itemStyle(colors, true),
+					onClick: () => {
+						setDeleteOpen(true);
+						setOpen(false);
+					},
+					children: "Delete"
+				})]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Modal, {
+				isOpen: editOpen,
+				onClose: () => setEditOpen(false),
+				title: "Edit Habit",
+				actions: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+					onClick: handleEdit,
+					children: "Save"
+				}),
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(InputField, {
+						label: "Habit name",
+						value: title,
+						onChange: (e) => setTitle(e.target.value)
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectField, {
+						label: "Difficulty",
+						options,
+						value: difficulty.toString(),
+						onChange: (val) => {
+							setDifficulty(Number(val));
+							setPay(habitTypeMap[val].defaultPay);
+						}
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(InputField, {
+						label: "Pay",
+						type: "number",
+						value: pay,
+						onChange: (e) => {
+							const val = e.target.value;
+							if (!isNaN(Number(val))) setPay(Number(val));
+						},
+						onBlur: (e) => {
+							const val = Number(e.target.value);
+							const min = habitTypeMap[difficulty].minPay;
+							const max = habitTypeMap[difficulty].maxPay;
+							if (!isNaN(val)) setPay(Math.min(Math.max(val, min), max));
+						},
+						max: habitTypeMap[difficulty].maxPay,
+						min: habitTypeMap[difficulty].minPay
+					})
+				]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Modal, {
+				isOpen: deleteOpen,
+				onClose: () => setDeleteOpen(false),
+				title: "Delete Habit",
+				actions: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+					onClick: handleDelete,
+					danger: true,
+					children: "Delete"
+				}),
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					style: { color: colors.text },
+					children: "Are you sure you want to delete this habit?"
+				})
+			})
+		]
+	});
+};
+var itemStyle = (colors, danger = false) => ({
+	padding: "12px 16px",
+	cursor: "pointer",
+	color: danger ? "#ff6b6b" : colors.text,
+	transition: "background 0.2s"
+});
+//#endregion
 //#region src/pages/habitDetailPage/HabitDetail.tsx
 function HabitDetailPage() {
 	const { id } = useParams();
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: ["Habit Detail Page - ID: ", id] });
+	const { colors } = useTheme();
+	const habit = useHabitsStore((s) => s.habits.find((h) => h.id === id));
+	const toggleHabitDone = useHabitsStore((s) => s.toggleHabitDone);
+	const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+	if (!habit) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+		style: {
+			display: "flex",
+			justifyContent: "center",
+			padding: "40px 16px"
+		},
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+			style: {
+				width: "100%",
+				maxWidth: "500px",
+				backgroundColor: colors.surface,
+				borderRadius: "20px",
+				padding: "24px",
+				boxShadow: `0 8px 24px ${colors.primary}33`,
+				position: "relative",
+				textAlign: "center",
+				color: colors.mutedText,
+				fontSize: "1.2rem",
+				fontWeight: "bold",
+				lineHeight: "1.5",
+				verticalAlign: "middle"
+			},
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+				style: {
+					margin: 0,
+					color: colors.text
+				},
+				children: "Habit not found"
+			})
+		})
+	});
+	const done = habit.entries.find((e) => e.date === today)?.done ?? false;
+	const streak = calculateStreak(habit.entries);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+		style: {
+			display: "flex",
+			justifyContent: "center",
+			padding: "40px 16px"
+		},
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			style: {
+				width: "100%",
+				maxWidth: "500px",
+				backgroundColor: colors.surface,
+				borderRadius: "20px",
+				padding: "24px",
+				boxShadow: `0 8px 24px ${colors.primary}33`,
+				position: "relative"
+			},
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(MenuDropdown, { habitId: habit.id }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+					style: {
+						marginTop: 0,
+						color: colors.text
+					},
+					children: habit.title
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+					style: { color: colors.mutedText },
+					children: ["💰 Pay: ", habit.pay]
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+					style: { color: colors.text },
+					children: [
+						"🔥 Streak: ",
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("b", { children: streak }),
+						" days"
+					]
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					style: { marginTop: "24px" },
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						style: {
+							color: colors.text,
+							marginBottom: "8px"
+						},
+						children: "Today"
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+						variant: done ? "secondary" : "primary",
+						onClick: () => toggleHabitDone(habit.id, today),
+						children: done ? "Marked as done ✅" : "Mark as done"
+					})]
+				})
+			]
+		})
+	});
 }
 //#endregion
 //#region src/features/auth/login.ts
@@ -12981,17 +13476,14 @@ var logout = () => {
 };
 //#endregion
 //#region src/shared/assets/logo.svg
-var logo_default = "/habit-former/assets/logo-Cbcn0Fzr.svg";
+var logo_default = "/habit-former/assets/logo-B-6LjBYn.svg";
 var header_module_default = {
 	logoWrapper: "_logoWrapper_vggih_2",
 	logoImg: "_logoImg_vggih_13"
 };
 //#endregion
 //#region src/widgets/header/Header.tsx
-var tabs = [{
-	label: "Habits",
-	route: ROUTES.HOME
-}];
+var tabs = [];
 var Header = () => {
 	const { colors } = useTheme();
 	const navigate = useNavigate();
