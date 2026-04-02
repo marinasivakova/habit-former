@@ -5,6 +5,7 @@ import { create } from "zustand";
 export interface HabitEntry {
   date: string;
   done: boolean;
+  amountEarned: number;
 }
 
 export interface Habit {
@@ -111,7 +112,10 @@ export const useHabitsStore = create<HabitsState>()((set) => ({
 
         return {
           ...habit,
-          entries: [...habit.entries, { date, done: true }],
+          entries: [
+            ...habit.entries,
+            { date, done: true, amountEarned: habit.pay },
+          ],
         };
       });
 
