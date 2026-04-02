@@ -4,6 +4,13 @@ body {
     margin: 0;
 }
 
+/* Chrome, Safari, Edge */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 @keyframes shimmer {
     0% {
         background-position: 0% 50%;
