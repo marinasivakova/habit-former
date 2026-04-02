@@ -7,40 +7,40 @@ import { useNavigate } from "react-router-dom";
 import logoSrc from "@/shared/assets/logo.svg"; // <- import as module
 import cls from "./header.module.scss";
 
-const tabs = [{ label: "Habits", route: ROUTES.HOME }];
+const tabs: { label: string; route: string }[] = [];
 
 export const Header = () => {
-    const { colors } = useTheme();
-    const navigate = useNavigate();
+  const { colors } = useTheme();
+  const navigate = useNavigate();
 
-    const handleLogout = () => {
-        logout();
-    };
+  const handleLogout = () => {
+    logout();
+  };
 
-    const goHome = () => {
-        navigate(ROUTES.HOME);
-    };
+  const goHome = () => {
+    navigate(ROUTES.HOME);
+  };
 
-    return (
-        <header
-            style={{
-                backgroundColor: colors.surface,
-                padding: "16px 24px",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                borderBottom: `1px solid ${colors.border}`,
-            }}
-        >
-            <div onClick={goHome} className={cls.logoWrapper}>
-                <img src={logoSrc} alt="habit-former" className={cls.logoImg} />
-            </div>
+  return (
+    <header
+      style={{
+        backgroundColor: colors.surface,
+        padding: "16px 24px",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        borderBottom: `1px solid ${colors.border}`,
+      }}
+    >
+      <div onClick={goHome} className={cls.logoWrapper}>
+        <img src={logoSrc} alt="habit-former" className={cls.logoImg} />
+      </div>
 
-            <Tabs tabs={tabs} />
+      <Tabs tabs={tabs} />
 
-            <Button variant="secondary" onClick={handleLogout}>
-                Logout
-            </Button>
-        </header>
-    );
+      <Button variant="secondary" onClick={handleLogout}>
+        Logout
+      </Button>
+    </header>
+  );
 };
