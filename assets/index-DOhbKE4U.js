@@ -12694,13 +12694,14 @@ var HabitItem = ({ title, done, onToggle, id }) => {
 			display: "flex",
 			justifyContent: "space-between",
 			alignItems: "center",
-			padding: "16px",
 			marginBottom: "12px",
 			borderRadius: "16px",
-			backgroundColor: colors.surface,
-			boxShadow: `0 4px 12px ${colors.primary}33`,
 			cursor: "pointer",
-			transition: "transform 0.1s ease, box-shadow 0.2s ease"
+			transition: "transform 0.1s ease, box-shadow 0.2s ease",
+			padding: "16px",
+			background: `linear-gradient(135deg, ${colors.surface}, ${colors.primary}08)`,
+			border: `1px solid ${colors.border}`,
+			boxShadow: `0 6px 16px ${colors.primary}11`
 		},
 		onMouseEnter: (e) => {
 			const el = e.currentTarget;
@@ -13358,11 +13359,12 @@ function HabitDetailPage() {
 			style: {
 				width: "100%",
 				maxWidth: "500px",
-				backgroundColor: colors.surface,
 				borderRadius: "20px",
+				position: "relative",
 				padding: "24px",
-				boxShadow: `0 8px 24px ${colors.primary}33`,
-				position: "relative"
+				background: `linear-gradient(135deg, ${colors.surface}, ${colors.primary}08)`,
+				border: `1px solid ${colors.border}`,
+				boxShadow: `0 6px 16px ${colors.primary}11`
 			},
 			children: [
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(MenuDropdown, { habitId: habit.id }),
@@ -13494,8 +13496,8 @@ function AuthPage() {
 	});
 }
 var MainLayout_module_default = {
-	mainLight: "_mainLight_1jhw6_1",
-	mainDark: "_mainDark_1jhw6_24"
+	mainLight: "_mainLight_6do0l_1",
+	mainDark: "_mainDark_6do0l_13"
 };
 //#endregion
 //#region src/widgets/app/footer/Footer.tsx
@@ -13653,6 +13655,10 @@ var getLastNDays = (n) => {
 };
 //#endregion
 //#region src/pages/overviewPage/utils/helpers.ts
+var hasAppStreakToday = (habits) => {
+	const today = getToday();
+	return habits.some((habit) => habit.entries.some((e) => e.date === today && e.done));
+};
 var getMoneyEarnedToday = (habits) => {
 	const today = getToday();
 	return habits.reduce((total, habit) => {
@@ -13664,36 +13670,6 @@ var getMoneyEarnedLastWeek = (habits) => {
 	return habits.reduce((total, habit) => {
 		return total + habit.entries.filter((e) => last7Days.has(e.date) && e.done).reduce((sum, e) => sum + e.amountEarned, 0);
 	}, 0);
-};
-var getHabitLongestStreak = (habit) => {
-	const doneDates = habit.entries.filter((e) => e.done).map((e) => e.date).sort();
-	if (doneDates.length === 0) return 0;
-	let longest = 1;
-	let current = 1;
-	for (let i = 1; i < doneDates.length; i++) {
-		const prev = new Date(doneDates[i - 1]);
-		const diff = (new Date(doneDates[i]).getTime() - prev.getTime()) / (1e3 * 60 * 60 * 24);
-		if (diff === 1) {
-			current++;
-			longest = Math.max(longest, current);
-		} else if (diff > 1) current = 1;
-	}
-	return longest;
-};
-var getLongestStreak = (habits) => {
-	let bestHabit = null;
-	let bestStreak = 0;
-	for (const habit of habits) {
-		const streak = getHabitLongestStreak(habit);
-		if (streak > bestStreak) {
-			bestStreak = streak;
-			bestHabit = habit;
-		}
-	}
-	return {
-		streak: bestStreak,
-		habitName: bestHabit?.title ?? null
-	};
 };
 var isDoneOnDate = (habit, date) => {
 	return habit.entries.some((e) => e.date === date && e.done);
@@ -13762,6 +13738,53 @@ var StatCard = ({ title, value, subtitle, colors }) => {
 	});
 };
 //#endregion
+//#region src/widgets/overview/AppStreakCard.tsx
+var AppStreakCard = ({ streak, activeToday }) => {
+	const { colors } = useTheme();
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		style: {
+			marginBottom: "20px",
+			padding: "20px",
+			borderRadius: "22px",
+			background: `linear-gradient(135deg, ${colors.primary}22, ${colors.primaryHover}33)`,
+			border: `1px solid ${colors.primary}55`,
+			boxShadow: activeToday ? `0 0 25px ${colors.primary}55` : `0 6px 16px ${colors.primary}22`,
+			textAlign: "center",
+			transition: "all 0.3s ease"
+		},
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				style: {
+					fontSize: "13px",
+					opacity: .7,
+					color: colors.text
+				},
+				children: "Current streak"
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				style: {
+					fontSize: "32px",
+					fontWeight: 800,
+					color: colors.text,
+					display: "flex",
+					justifyContent: "center",
+					alignItems: "center",
+					gap: "8px"
+				},
+				children: ["🔥 ", streak]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				style: {
+					fontSize: "12px",
+					opacity: .6,
+					color: colors.text
+				},
+				children: activeToday ? "You're on track today" : "Do a habit to keep it alive"
+			})
+		]
+	});
+};
+//#endregion
 //#region src/pages/overviewPage/OverviewPage.tsx
 function OverviewPage() {
 	const { colors } = useTheme();
@@ -13772,13 +13795,15 @@ function OverviewPage() {
 	const progress = total ? Math.round(doneCount / total * 100) : 0;
 	const moneyToday = getMoneyEarnedToday(habits);
 	const moneyWeek = getMoneyEarnedLastWeek(habits);
-	const { streak: bestStreak, habitName: bestHabit } = getLongestStreak(habits);
 	const { streak: currentStreak, habitName: currentHabit } = getCurrentLongestStreak(habits);
+	const hasToday = hasAppStreakToday(habits);
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 		style: {
 			maxWidth: "500px",
 			margin: "0 auto",
-			padding: "32px 16px 100px"
+			padding: "32px 16px 25px",
+			maxHeight: "80vh",
+			overflowY: "auto"
 		},
 		children: [
 			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
@@ -13796,6 +13821,10 @@ function OverviewPage() {
 					},
 					children: (/* @__PURE__ */ new Date()).toDateString()
 				})]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(AppStreakCard, {
+				streak: currentStreak,
+				activeToday: hasToday
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 				style: {
@@ -13852,32 +13881,17 @@ function OverviewPage() {
 					gridTemplateColumns: "1fr 1fr",
 					gap: "12px"
 				},
-				children: [
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(StatCard, {
-						title: "This week",
-						value: `+${moneyWeek}`,
-						subtitle: "earned",
-						colors
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(StatCard, {
-						title: "Current streak",
-						value: currentStreak,
-						subtitle: currentHabit ?? "—",
-						colors
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(StatCard, {
-						title: "Best streak",
-						value: bestStreak,
-						subtitle: bestHabit ?? "—",
-						colors
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(StatCard, {
-						title: "Completion",
-						value: `${progress}%`,
-						subtitle: "today",
-						colors
-					})
-				]
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(StatCard, {
+					title: "This week",
+					value: `+${moneyWeek}`,
+					subtitle: "earned",
+					colors
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(StatCard, {
+					title: "Best streak",
+					value: currentStreak,
+					subtitle: currentHabit ?? "—",
+					colors
+				})]
 			})
 		]
 	});
@@ -13907,16 +13921,24 @@ var logout = () => {
 //#endregion
 //#region src/pages/profile/ProfilePage.tsx
 function ProfilePage() {
+	const { colors } = useTheme();
 	const handleLogout = () => {
 		logout();
 	};
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 		className: "card",
-		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+		style: { paddingBottom: "24px" },
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+			style: {
+				color: colors.text,
+				marginBottom: "24px"
+			},
+			children: "Profile"
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
 			variant: "secondary",
 			onClick: handleLogout,
 			children: "Logout"
-		})
+		})]
 	});
 }
 //#endregion
