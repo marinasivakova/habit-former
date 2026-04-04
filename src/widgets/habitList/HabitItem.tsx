@@ -2,6 +2,8 @@
 import { type FC } from "react";
 import { useTheme } from "@/shared/ui/theme";
 import { useNavigate } from "react-router-dom";
+import { calculateStreak } from "@/pages/habitDetailPage/utls/streakCounter";
+import { useHabitsStore } from "@/entities/habit/model/store";
 
 interface HabitItemProps {
   title: string;
@@ -18,6 +20,10 @@ export const HabitItem: FC<HabitItemProps> = ({
 }) => {
   const { colors } = useTheme();
   const navigate = useNavigate();
+
+  const habit = useHabitsStore((s) => s.habits.find((h) => h.id === id));
+
+  const streak = calculateStreak(habit?.entries || []);
 
   return (
     <div
@@ -46,9 +52,34 @@ export const HabitItem: FC<HabitItemProps> = ({
       }}
       onClick={() => navigate(`/habit/${id}`)}
     >
-      <span style={{ color: done ? colors.mutedText : colors.text }}>
-        {title}
-      </span>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "baseline",
+          flexDirection: "column",
+        }}
+      >
+        <span
+          style={{
+            color: done ? colors.mutedText : colors.text,
+            fontWeight: "bold",
+
+            textDecoration: done ? "line-through" : "none",
+          }}
+        >
+          {title}
+        </span>
+
+        {/* Streak counter */}
+        <span
+          style={{
+            color: done ? colors.text : colors.mutedText,
+            fontSize: "0.8rem",
+          }}
+        >
+          🔥{streak}
+        </span>
+      </div>
 
       {/* Custom checkbox */}
       <div

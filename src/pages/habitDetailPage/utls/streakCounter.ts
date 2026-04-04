@@ -21,3 +21,34 @@ export function calculateStreak(entries: { date: string; done: boolean }[]) {
 
   return streak;
 }
+
+export function calculateAmountEarned(
+  entries: { date: string; done: boolean; amountEarned: number }[]
+) {
+  return entries.reduce((total, entry) => total + entry.amountEarned, 0);
+}
+
+export function calculateAmountEarnedUntilDate(
+  entries: { date: string; done: boolean; amountEarned: number }[],
+  targetDate: string
+) {
+  return entries.reduce((total, entry) => {
+    if (entry.date <= targetDate) {
+      return total + entry.amountEarned;
+    }
+    return total;
+  }, 0);
+}
+
+export function calculateAmountEarnedFromDateToDate(
+  entries: { date: string; done: boolean; amountEarned: number }[],
+  startDate: string,
+  endDate: string
+) {
+  return entries.reduce((total, entry) => {
+    if (entry.date >= startDate && entry.date <= endDate) {
+      return total + entry.amountEarned;
+    }
+    return total;
+  }, 0);
+}

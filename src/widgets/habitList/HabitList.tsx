@@ -13,20 +13,7 @@ export const HabitList = () => {
   const today = new Date().toISOString().split("T")[0];
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        padding: "32px",
-        borderRadius: "16px",
-        backgroundColor: colors.surface,
-        boxShadow: `0 4px 12px ${colors.primary}33`,
-        maxWidth: "600px",
-
-        margin: "auto",
-      }}
-    >
+    <div className="card">
       <h2 style={{ color: colors.text, marginBottom: "24px" }}>Habit List</h2>
       <h3 style={{ color: colors.mutedText }}>
         {dayjs(today).format("MMMM D, YYYY")}

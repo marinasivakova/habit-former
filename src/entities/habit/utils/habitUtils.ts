@@ -7,19 +7,19 @@ interface HabitType {
 
 export const habitTypeMap: Record<string, HabitType> = {
   "0": {
-    difficulty: "easy",
+    difficulty: "Easy",
     minPay: 10,
     maxPay: 50,
     defaultPay: 25,
   },
   "1": {
-    difficulty: "medium",
+    difficulty: "Medium",
     minPay: 50,
     maxPay: 100,
     defaultPay: 75,
   },
   "2": {
-    difficulty: "hard",
+    difficulty: "Hard",
     minPay: 100,
     maxPay: 200,
     defaultPay: 150,
