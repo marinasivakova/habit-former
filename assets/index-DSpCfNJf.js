@@ -11855,9 +11855,12 @@ function useViewTransitionState(to, { relative } = {}) {
 //#endregion
 //#region src/shared/config/routes.ts
 var ROUTES = {
-	HOME: "/",
+	OVERVIEW: "/",
+	HABIT_LIST: "/habit",
 	HABIT_DETAIL: "/habit/:id",
-	AUTH: "/auth"
+	AUTH: "/auth",
+	HISTORY: "/history",
+	PROFILE: "/profile"
 };
 //#endregion
 //#region src/app/model/helpers.ts
@@ -12472,19 +12475,19 @@ var Modal = ({ isOpen, onClose, title, children, actions }) => {
 //#region src/entities/habit/utils/habitUtils.ts
 var habitTypeMap = {
 	"0": {
-		difficulty: "easy",
+		difficulty: "Easy",
 		minPay: 10,
 		maxPay: 50,
 		defaultPay: 25
 	},
 	"1": {
-		difficulty: "medium",
+		difficulty: "Medium",
 		minPay: 50,
 		maxPay: 100,
 		defaultPay: 75
 	},
 	"2": {
-		difficulty: "hard",
+		difficulty: "Hard",
 		minPay: 100,
 		maxPay: 200,
 		defaultPay: 150
@@ -12656,10 +12659,36 @@ var CreateHabitModal = () => {
 	})] });
 };
 //#endregion
+//#region src/pages/habitDetailPage/utls/streakCounter.ts
+function calculateStreak(entries) {
+	const sorted = [...entries].filter((e) => e.done).sort((a, b) => a.date < b.date ? 1 : -1);
+	let streak = 0;
+	let currentDate = /* @__PURE__ */ new Date();
+	for (const entry of sorted) {
+		const entryDate = new Date(entry.date);
+		if ((currentDate.setHours(0, 0, 0, 0) - entryDate.setHours(0, 0, 0, 0)) / (1e3 * 60 * 60 * 24) === streak) streak++;
+		else break;
+	}
+	return streak;
+}
+function calculateAmountEarnedUntilDate(entries, targetDate) {
+	return entries.reduce((total, entry) => {
+		if (entry.date <= targetDate) return total + entry.amountEarned;
+		return total;
+	}, 0);
+}
+function calculateAmountEarnedFromDateToDate(entries, startDate, endDate) {
+	return entries.reduce((total, entry) => {
+		if (entry.date >= startDate && entry.date <= endDate) return total + entry.amountEarned;
+		return total;
+	}, 0);
+}
+//#endregion
 //#region src/widgets/habitList/HabitItem.tsx
 var HabitItem = ({ title, done, onToggle, id }) => {
 	const { colors } = useTheme();
 	const navigate = useNavigate();
+	const streak = calculateStreak(useHabitsStore((s) => s.habits.find((h) => h.id === id))?.entries || []);
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 		style: {
 			display: "flex",
@@ -12684,9 +12713,26 @@ var HabitItem = ({ title, done, onToggle, id }) => {
 			el.style.boxShadow = `0 4px 12px ${colors.primary}33`;
 		},
 		onClick: () => navigate(`/habit/${id}`),
-		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-			style: { color: done ? colors.mutedText : colors.text },
-			children: title
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			style: {
+				display: "flex",
+				alignItems: "baseline",
+				flexDirection: "column"
+			},
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+				style: {
+					color: done ? colors.mutedText : colors.text,
+					fontWeight: "bold",
+					textDecoration: done ? "line-through" : "none"
+				},
+				children: title
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+				style: {
+					color: done ? colors.text : colors.mutedText,
+					fontSize: "0.8rem"
+				},
+				children: ["🔥", streak]
+			})]
 		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 			onClick: (e) => {
 				e.stopPropagation();
@@ -13022,17 +13068,7 @@ var HabitList = () => {
 	const { colors } = useTheme();
 	const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-		style: {
-			display: "flex",
-			flexDirection: "column",
-			alignItems: "center",
-			padding: "32px",
-			borderRadius: "16px",
-			backgroundColor: colors.surface,
-			boxShadow: `0 4px 12px ${colors.primary}33`,
-			maxWidth: "600px",
-			margin: "auto"
-		},
+		className: "card",
 		children: [
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
 				style: {
@@ -13073,22 +13109,9 @@ var HabitList = () => {
 	});
 };
 //#endregion
-//#region src/pages/dashboardPage/Dashboard.tsx
-function DashboardPage() {
+//#region src/pages/habitListPage/HabitListPage.tsx
+function HabitListPage() {
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(HabitList, {});
-}
-//#endregion
-//#region src/pages/habitDetailPage/utls/streakCounter.ts
-function calculateStreak(entries) {
-	const sorted = [...entries].filter((e) => e.done).sort((a, b) => a.date < b.date ? 1 : -1);
-	let streak = 0;
-	let currentDate = /* @__PURE__ */ new Date();
-	for (const entry of sorted) {
-		const entryDate = new Date(entry.date);
-		if ((currentDate.setHours(0, 0, 0, 0) - entryDate.setHours(0, 0, 0, 0)) / (1e3 * 60 * 60 * 24) === streak) streak++;
-		else break;
-	}
-	return streak;
 }
 //#endregion
 //#region src/shared/hooks/useIsomorphicLayoutEffect.ts
@@ -13323,6 +13346,8 @@ function HabitDetailPage() {
 	});
 	const done = habit.entries.find((e) => e.date === today)?.done ?? false;
 	const streak = calculateStreak(habit.entries);
+	const earned = calculateAmountEarnedUntilDate(habit.entries, today);
+	const earnedThisWeek = calculateAmountEarnedFromDateToDate(habit.entries, new Date((/* @__PURE__ */ new Date()).setDate((/* @__PURE__ */ new Date()).getDate() - 7)).toISOString().split("T")[0], today);
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 		style: {
 			display: "flex",
@@ -13341,16 +13366,62 @@ function HabitDetailPage() {
 			},
 			children: [
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(MenuDropdown, { habitId: habit.id }),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 					style: {
-						marginTop: 0,
-						color: colors.text
+						display: "flex",
+						gap: "16px"
 					},
-					children: habit.title
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+						style: {
+							marginTop: 0,
+							color: colors.text
+						},
+						children: habit.title
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+						onClick: (e) => {
+							e.stopPropagation();
+							toggleHabitDone(habit.id);
+						},
+						style: {
+							width: "24px",
+							height: "24px",
+							borderRadius: "6px",
+							border: `2px solid ${colors.primary}`,
+							backgroundColor: done ? colors.primary : "transparent",
+							display: "flex",
+							justifyContent: "center",
+							alignItems: "center",
+							cursor: "pointer",
+							transition: "all 0.2s ease"
+						},
+						children: done && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", {
+							width: "14",
+							height: "14",
+							viewBox: "0 0 24 24",
+							fill: "none",
+							stroke: colors.text,
+							strokeWidth: "3",
+							strokeLinecap: "round",
+							strokeLinejoin: "round",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("polyline", { points: "20 6 9 17 4 12" })
+						})
+					})]
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+					style: { color: colors.mutedText },
+					children: ["🎯 Difficulty: ", habitTypeMap?.[habit?.difficulty]?.difficulty]
 				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
 					style: { color: colors.mutedText },
 					children: ["💰 Pay: ", habit.pay]
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+					style: { color: colors.text },
+					children: ["💸 This week: ", /* @__PURE__ */ (0, import_jsx_runtime.jsx)("b", { children: earnedThisWeek })]
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+					style: { color: colors.text },
+					children: ["💰 Overall: ", /* @__PURE__ */ (0, import_jsx_runtime.jsx)("b", { children: earned })]
 				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
 					style: { color: colors.text },
@@ -13359,20 +13430,6 @@ function HabitDetailPage() {
 						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("b", { children: streak }),
 						" days"
 					]
-				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-					style: { marginTop: "24px" },
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-						style: {
-							color: colors.text,
-							marginBottom: "8px"
-						},
-						children: "Today"
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
-						variant: done ? "secondary" : "primary",
-						onClick: () => toggleHabitDone(habit.id, today),
-						children: done ? "Marked as done ✅" : "Mark as done"
-					})]
 				})
 			]
 		})
@@ -13436,94 +13493,71 @@ function AuthPage() {
 		})
 	});
 }
+var MainLayout_module_default = {
+	mainLight: "_mainLight_1jhw6_1",
+	mainDark: "_mainDark_1jhw6_24"
+};
 //#endregion
-//#region src/widgets/header/Tabs.tsx
-var Tabs = ({ tabs }) => {
+//#region src/widgets/app/footer/Footer.tsx
+var tabs = [
+	{
+		label: "Home",
+		path: ROUTES.OVERVIEW
+	},
+	{
+		label: "Habits",
+		path: ROUTES.HABIT_LIST
+	},
+	{
+		label: "History",
+		path: ROUTES.HISTORY
+	},
+	{
+		label: "Profile",
+		path: ROUTES.PROFILE
+	}
+];
+var FooterNav = () => {
 	const { colors } = useTheme();
-	const navigate = useNavigate();
 	const location = useLocation();
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("nav", {
+	const navigate = useNavigate();
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 		style: {
+			position: "fixed",
+			bottom: "16px",
+			left: "50%",
+			transform: "translateX(-50%)",
+			width: "min(500px, 95%)",
+			background: colors.surface,
+			border: `1px solid ${colors.border}`,
+			borderRadius: "20px",
 			display: "flex",
-			borderBottom: `1px solid ${colors.border}`
+			justifyContent: "space-around",
+			padding: "8px",
+			boxShadow: `0 8px 24px ${colors.primary}33`,
+			backdropFilter: "blur(10px)",
+			zIndex: 100
 		},
 		children: tabs.map((tab) => {
-			const isActive = location.pathname === tab.route;
-			return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
-				variant: "tab",
-				onClick: () => navigate(tab.route),
+			const isActive = location.pathname === tab.path;
+			return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				onClick: () => navigate(tab.path),
 				style: {
-					color: isActive ? colors.text : colors.mutedText,
-					fontWeight: isActive ? 700 : 500,
-					borderBottom: isActive ? `3px solid ${colors.primary}` : "3px solid transparent",
-					backgroundColor: "transparent",
-					borderRadius: "8px",
-					padding: "8px 12px",
-					marginRight: "4px",
+					flex: 1,
+					textAlign: "center",
+					padding: "10px 0",
+					borderRadius: "14px",
+					cursor: "pointer",
 					transition: "all 0.2s ease",
-					boxShadow: isActive ? `0 0 8px ${colors.primary}55` : "none"
+					background: isActive ? colors.primary : "transparent",
+					color: isActive ? "#fff" : colors.text,
+					fontWeight: isActive ? 600 : 400,
+					boxShadow: isActive ? `0 0 12px ${colors.primary}` : "none"
 				},
 				children: tab.label
-			}, tab.route);
+			}, tab.path);
 		})
 	});
-};
-//#endregion
-//#region src/features/auth/logout.ts
-var logout = () => {
-	useAuthStore.getState().logout();
-	useHabitsStore.setState({ habits: [] });
-};
-//#endregion
-//#region src/shared/assets/logo.svg
-var logo_default = "/habit-former/assets/logo-B-6LjBYn.svg";
-var header_module_default = {
-	logoWrapper: "_logoWrapper_vggih_2",
-	logoImg: "_logoImg_vggih_13"
-};
-//#endregion
-//#region src/widgets/header/Header.tsx
-var tabs = [];
-var Header = () => {
-	const { colors } = useTheme();
-	const navigate = useNavigate();
-	const handleLogout = () => {
-		logout();
-	};
-	const goHome = () => {
-		navigate(ROUTES.HOME);
-	};
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
-		style: {
-			backgroundColor: colors.surface,
-			padding: "16px 24px",
-			display: "flex",
-			justifyContent: "space-between",
-			alignItems: "center",
-			borderBottom: `1px solid ${colors.border}`
-		},
-		children: [
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-				onClick: goHome,
-				className: header_module_default.logoWrapper,
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
-					src: logo_default,
-					alt: "habit-former",
-					className: header_module_default.logoImg
-				})
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Tabs, { tabs }),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
-				variant: "secondary",
-				onClick: handleLogout,
-				children: "Logout"
-			})
-		]
-	});
-};
-var MainLayout_module_default = {
-	mainLight: "_mainLight_7zvkb_1",
-	mainDark: "_mainDark_7zvkb_23"
 };
 //#endregion
 //#region src/widgets/layouts/MainLayout.tsx
@@ -13538,10 +13572,10 @@ var MainLayout = ({ children }) => {
 			flexDirection: "column",
 			fontFamily: typography.fontFamily
 		},
-		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Header, {}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("main", {
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("main", {
 			className: theme === "dark" ? MainLayout_module_default.mainDark : MainLayout_module_default.mainLight,
 			children
-		})]
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(FooterNav, {})]
 	});
 };
 //#endregion
@@ -13559,14 +13593,348 @@ var RouteGuard = ({ children, requireAuth = true, redirectTo }) => {
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_jsx_runtime.Fragment, { children });
 };
 //#endregion
+//#region src/widgets/overview/ProgressPie.tsx
+var ProgressPie = ({ value, label }) => {
+	const { colors } = useTheme();
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+		style: {
+			width: "140px",
+			height: "140px",
+			borderRadius: "50%",
+			background: `conic-gradient(
+          ${colors.primary} ${value}%,
+          ${colors.border} ${value}% 100%
+        )`,
+			display: "flex",
+			alignItems: "center",
+			justifyContent: "center",
+			position: "relative"
+		},
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			style: {
+				width: "100px",
+				height: "100px",
+				borderRadius: "50%",
+				background: colors.surface,
+				display: "flex",
+				flexDirection: "column",
+				alignItems: "center",
+				justifyContent: "center",
+				color: colors.text
+			},
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				style: {
+					fontSize: "20px",
+					fontWeight: 600
+				},
+				children: [value, "%"]
+			}), label && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				style: {
+					fontSize: "12px",
+					opacity: .6
+				},
+				children: label
+			})]
+		})
+	});
+};
+//#endregion
+//#region src/shared/utils/helpers.ts
+var getToday = () => (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+var getLastNDays = (n) => {
+	const days = [];
+	const today = /* @__PURE__ */ new Date();
+	for (let i = 0; i < n; i++) {
+		const d = new Date(today);
+		d.setDate(today.getDate() - i);
+		days.push(d.toISOString().split("T")[0]);
+	}
+	return days;
+};
+//#endregion
+//#region src/pages/overviewPage/utils/helpers.ts
+var getMoneyEarnedToday = (habits) => {
+	const today = getToday();
+	return habits.reduce((total, habit) => {
+		return total + habit.entries.filter((e) => e.date === today && e.done).reduce((sum, e) => sum + e.amountEarned, 0);
+	}, 0);
+};
+var getMoneyEarnedLastWeek = (habits) => {
+	const last7Days = new Set(getLastNDays(7));
+	return habits.reduce((total, habit) => {
+		return total + habit.entries.filter((e) => last7Days.has(e.date) && e.done).reduce((sum, e) => sum + e.amountEarned, 0);
+	}, 0);
+};
+var getHabitLongestStreak = (habit) => {
+	const doneDates = habit.entries.filter((e) => e.done).map((e) => e.date).sort();
+	if (doneDates.length === 0) return 0;
+	let longest = 1;
+	let current = 1;
+	for (let i = 1; i < doneDates.length; i++) {
+		const prev = new Date(doneDates[i - 1]);
+		const diff = (new Date(doneDates[i]).getTime() - prev.getTime()) / (1e3 * 60 * 60 * 24);
+		if (diff === 1) {
+			current++;
+			longest = Math.max(longest, current);
+		} else if (diff > 1) current = 1;
+	}
+	return longest;
+};
+var getLongestStreak = (habits) => {
+	let bestHabit = null;
+	let bestStreak = 0;
+	for (const habit of habits) {
+		const streak = getHabitLongestStreak(habit);
+		if (streak > bestStreak) {
+			bestStreak = streak;
+			bestHabit = habit;
+		}
+	}
+	return {
+		streak: bestStreak,
+		habitName: bestHabit?.title ?? null
+	};
+};
+var isDoneOnDate = (habit, date) => {
+	return habit.entries.some((e) => e.date === date && e.done);
+};
+var getHabitCurrentStreak = (habit) => {
+	let streak = 0;
+	const today = /* @__PURE__ */ new Date();
+	while (true) {
+		const dateStr = new Date(today).toISOString().split("T")[0];
+		if (!isDoneOnDate(habit, dateStr)) break;
+		streak++;
+		today.setDate(today.getDate() - 1);
+	}
+	return streak;
+};
+var getCurrentLongestStreak = (habits) => {
+	let bestHabit = null;
+	let bestStreak = 0;
+	for (const habit of habits) {
+		const streak = getHabitCurrentStreak(habit);
+		if (streak > bestStreak) {
+			bestStreak = streak;
+			bestHabit = habit;
+		}
+	}
+	return {
+		streak: bestStreak,
+		habitName: bestHabit?.title ?? null
+	};
+};
+//#endregion
+//#region src/widgets/overview/StatCard.tsx
+var StatCard = ({ title, value, subtitle, colors }) => {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		style: {
+			padding: "16px",
+			borderRadius: "18px",
+			background: `linear-gradient(135deg, ${colors.surface}, ${colors.primary}08)`,
+			border: `1px solid ${colors.border}`,
+			boxShadow: `0 6px 16px ${colors.primary}11`
+		},
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				style: {
+					fontSize: "12px",
+					opacity: .6
+				},
+				children: title
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				style: {
+					fontSize: "18px",
+					fontWeight: 700,
+					color: colors.text
+				},
+				children: value
+			}),
+			subtitle && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				style: {
+					fontSize: "12px",
+					opacity: .5
+				},
+				children: subtitle
+			})
+		]
+	});
+};
+//#endregion
+//#region src/pages/overviewPage/OverviewPage.tsx
+function OverviewPage() {
+	const { colors } = useTheme();
+	const habits = useHabitsStore((s) => s.habits);
+	const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+	const doneCount = habits.filter((h) => h.entries.find((e) => e.date === today)?.done).length;
+	const total = habits.length;
+	const progress = total ? Math.round(doneCount / total * 100) : 0;
+	const moneyToday = getMoneyEarnedToday(habits);
+	const moneyWeek = getMoneyEarnedLastWeek(habits);
+	const { streak: bestStreak, habitName: bestHabit } = getLongestStreak(habits);
+	const { streak: currentStreak, habitName: currentHabit } = getCurrentLongestStreak(habits);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		style: {
+			maxWidth: "500px",
+			margin: "0 auto",
+			padding: "32px 16px 100px"
+		},
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				style: {
+					marginBottom: "32px",
+					textAlign: "center"
+				},
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+					style: { color: colors.text },
+					children: "Today"
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					style: {
+						color: colors.text,
+						opacity: .6
+					},
+					children: (/* @__PURE__ */ new Date()).toDateString()
+				})]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				style: {
+					background: `linear-gradient(135deg, ${colors.surface}, ${colors.primary}11)`,
+					borderRadius: "28px",
+					padding: "32px 20px",
+					border: `1px solid ${colors.border}`,
+					boxShadow: `0 12px 40px ${colors.primary}22`,
+					display: "flex",
+					flexDirection: "column",
+					alignItems: "center",
+					gap: "24px",
+					textAlign: "center"
+				},
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ProgressPie, {
+						value: progress,
+						label: "completed"
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						style: { color: colors.text },
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							style: {
+								fontSize: "20px",
+								fontWeight: 700
+							},
+							children: [
+								doneCount,
+								" / ",
+								total
+							]
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+							style: { opacity: .6 },
+							children: "habits completed today"
+						})]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						style: {
+							marginTop: "8px",
+							padding: "10px 16px",
+							borderRadius: "12px",
+							background: `${colors.primary}22`,
+							color: colors.text,
+							fontWeight: 600
+						},
+						children: ["💰 +", moneyToday]
+					})
+				]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				style: {
+					marginTop: "24px",
+					display: "grid",
+					gridTemplateColumns: "1fr 1fr",
+					gap: "12px"
+				},
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(StatCard, {
+						title: "This week",
+						value: `+${moneyWeek}`,
+						subtitle: "earned",
+						colors
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(StatCard, {
+						title: "Current streak",
+						value: currentStreak,
+						subtitle: currentHabit ?? "—",
+						colors
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(StatCard, {
+						title: "Best streak",
+						value: bestStreak,
+						subtitle: bestHabit ?? "—",
+						colors
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(StatCard, {
+						title: "Completion",
+						value: `${progress}%`,
+						subtitle: "today",
+						colors
+					})
+				]
+			})
+		]
+	});
+}
+//#endregion
+//#region src/pages/system/NotFoundPage.tsx
+function NotFoundPage() {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "card",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", { children: "404" }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: "Page not found" }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+				variant: "primary",
+				onClick: () => window.history.back(),
+				children: "Go back"
+			})
+		]
+	});
+}
+//#endregion
+//#region src/features/auth/logout.ts
+var logout = () => {
+	useAuthStore.getState().logout();
+	useHabitsStore.setState({ habits: [] });
+};
+//#endregion
+//#region src/pages/profile/ProfilePage.tsx
+function ProfilePage() {
+	const handleLogout = () => {
+		logout();
+	};
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+		className: "card",
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+			variant: "secondary",
+			onClick: handleLogout,
+			children: "Logout"
+		})
+	});
+}
+//#endregion
 //#region src/app/AppRoutes.tsx
 function AppRoutes() {
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Routes, { children: [
 		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Route, {
-			path: ROUTES.HOME,
+			path: ROUTES.OVERVIEW,
 			element: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(RouteGuard, {
 				redirectTo: ROUTES.AUTH,
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MainLayout, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DashboardPage, {}) })
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MainLayout, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(OverviewPage, {}) })
+			})
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Route, {
+			path: ROUTES.HABIT_LIST,
+			element: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(RouteGuard, {
+				redirectTo: ROUTES.AUTH,
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MainLayout, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(HabitListPage, {}) })
 			})
 		}),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Route, {
@@ -13577,10 +13945,31 @@ function AppRoutes() {
 			})
 		}),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Route, {
+			path: ROUTES.HISTORY,
+			element: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(RouteGuard, {
+				redirectTo: ROUTES.AUTH,
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MainLayout, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { children: "History" }) })
+			})
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Route, {
+			path: ROUTES.PROFILE,
+			element: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(RouteGuard, {
+				redirectTo: ROUTES.AUTH,
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MainLayout, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ProfilePage, {}) })
+			})
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Route, {
+			path: "*",
+			element: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(RouteGuard, {
+				redirectTo: ROUTES.AUTH,
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MainLayout, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(NotFoundPage, {}) })
+			})
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Route, {
 			path: ROUTES.AUTH,
 			element: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(RouteGuard, {
 				requireAuth: false,
-				redirectTo: ROUTES.HOME,
+				redirectTo: ROUTES.OVERVIEW,
 				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AuthPage, {})
 			})
 		})
