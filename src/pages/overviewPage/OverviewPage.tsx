@@ -6,7 +6,6 @@ import { ProgressPie } from "@/widgets/overview/ProgressPie";
 import {
   getMoneyEarnedToday,
   getMoneyEarnedLastWeek,
-  getLongestStreak,
   getCurrentLongestStreak,
   hasAppStreakToday,
 } from "./utils/helpers";
