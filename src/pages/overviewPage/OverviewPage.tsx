@@ -8,8 +8,10 @@ import {
   getMoneyEarnedLastWeek,
   getLongestStreak,
   getCurrentLongestStreak,
+  hasAppStreakToday,
 } from "./utils/helpers";
 import { StatCard } from "@/widgets/overview/StatCard";
+import { AppStreakCard } from "@/widgets/overview/AppStreakCard";
 
 export default function OverviewPage() {
   const { colors } = useTheme();
@@ -27,16 +29,19 @@ export default function OverviewPage() {
   // --- new stats ---
   const moneyToday = getMoneyEarnedToday(habits);
   const moneyWeek = getMoneyEarnedLastWeek(habits);
-  const { streak: bestStreak, habitName: bestHabit } = getLongestStreak(habits);
   const { streak: currentStreak, habitName: currentHabit } =
     getCurrentLongestStreak(habits);
+
+  const hasToday = hasAppStreakToday(habits);
 
   return (
     <div
       style={{
         maxWidth: "500px",
         margin: "0 auto",
-        padding: "32px 16px 100px",
+        padding: "32px 16px 25px",
+        maxHeight: "80vh",
+        overflowY: "auto",
       }}
     >
       {/* Header */}
@@ -46,6 +51,8 @@ export default function OverviewPage() {
           {new Date().toDateString()}
         </p>
       </div>
+
+      <AppStreakCard streak={currentStreak} activeToday={hasToday} />
 
       {/* MAIN CARD */}
       <div
@@ -103,23 +110,9 @@ export default function OverviewPage() {
         />
 
         <StatCard
-          title="Current streak"
+          title="Best streak"
           value={currentStreak}
           subtitle={currentHabit ?? "—"}
-          colors={colors}
-        />
-
-        <StatCard
-          title="Best streak"
-          value={bestStreak}
-          subtitle={bestHabit ?? "—"}
-          colors={colors}
-        />
-
-        <StatCard
-          title="Completion"
-          value={`${progress}%`}
-          subtitle="today"
           colors={colors}
         />
       </div>

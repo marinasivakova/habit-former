@@ -79,11 +79,12 @@ export default function HabitDetailPage() {
         style={{
           width: "100%",
           maxWidth: "500px",
-          backgroundColor: colors.surface,
           borderRadius: "20px",
-          padding: "24px",
-          boxShadow: `0 8px 24px ${colors.primary}33`,
           position: "relative",
+          padding: "24px",
+          background: `linear-gradient(135deg, ${colors.surface}, ${colors.primary}08)`,
+          border: `1px solid ${colors.border}`,
+          boxShadow: `0 6px 16px ${colors.primary}11`,
         }}
       >
         {/* Top right menu button */}

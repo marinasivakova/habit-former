@@ -31,13 +31,14 @@ export const HabitItem: FC<HabitItemProps> = ({
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-        padding: "16px",
         marginBottom: "12px",
         borderRadius: "16px",
-        backgroundColor: colors.surface,
-        boxShadow: `0 4px 12px ${colors.primary}33`,
         cursor: "pointer",
         transition: "transform 0.1s ease, box-shadow 0.2s ease",
+        padding: "16px",
+        background: `linear-gradient(135deg, ${colors.surface}, ${colors.primary}08)`,
+        border: `1px solid ${colors.border}`,
+        boxShadow: `0 6px 16px ${colors.primary}11`,
       }}
       // optional hover effect
       onMouseEnter={(e) => {
