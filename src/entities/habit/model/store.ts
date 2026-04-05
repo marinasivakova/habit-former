@@ -23,6 +23,7 @@ interface HabitsState {
   editHabit: (habitId: string, changes: Partial<Habit>) => void;
   toggleHabitDone: (habitId: string, date?: string) => void;
   loadHabitsForUser: (userId: string) => void;
+  setHabits: (habits: Habit[]) => void;
 }
 
 const createUserStorage = (userId: string) => {
@@ -136,5 +137,13 @@ export const useHabitsStore = create<HabitsState>()((set) => ({
     }
 
     set({ habits: saved });
+  },
+
+  setHabits: (habits) => {
+    const userId = useAuthStore.getState().activeUserId;
+    if (!userId) return;
+
+    createUserStorage(userId).setItem(habits);
+    set({ habits });
   },
 }));
