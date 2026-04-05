@@ -12079,9 +12079,18 @@ var persistImpl = (config, baseOptions) => (set, get, api) => {
 var persist = persistImpl;
 //#endregion
 //#region src/entities/auth/model/store.ts
-var useAuthStore = create()(persist((set) => ({
+var useAuthStore = create()(persist((set, get) => ({
 	activeUserId: null,
-	login: (userId) => set({ activeUserId: userId }),
+	users: [],
+	login: (userId) => {
+		const { users } = get();
+		if (!users.includes(userId)) set({ users: [...users, userId] });
+		set({ activeUserId: userId });
+	},
+	addUser: (userId) => {
+		const { users } = get();
+		if (!users.includes(userId)) set({ users: [...users, userId] });
+	},
 	logout: () => set({ activeUserId: null })
 }), {
 	name: "habit-former-auth",
@@ -12089,7 +12098,7 @@ var useAuthStore = create()(persist((set) => ({
 }));
 //#endregion
 //#region src/entities/habit/model/store.ts
-var createUserStorage = (userId) => {
+var createUserStorage$1 = (userId) => {
 	const key = makeUserStorageKey(userId, "habit-former-habits");
 	return {
 		getItem: () => {
@@ -12118,7 +12127,7 @@ var useHabitsStore = create()((set) => ({
 		};
 		set((state) => {
 			const updatedHabits = [...state.habits, newHabit];
-			createUserStorage(userId).setItem(updatedHabits);
+			createUserStorage$1(userId).setItem(updatedHabits);
 			return { habits: updatedHabits };
 		});
 	},
@@ -12127,7 +12136,7 @@ var useHabitsStore = create()((set) => ({
 		if (!userId) return;
 		set((state) => {
 			const updatedHabits = state.habits.filter((habit) => habit.id !== habitId);
-			createUserStorage(userId).setItem(updatedHabits);
+			createUserStorage$1(userId).setItem(updatedHabits);
 			return { habits: updatedHabits };
 		});
 	},
@@ -12142,7 +12151,7 @@ var useHabitsStore = create()((set) => ({
 					...changes
 				};
 			});
-			createUserStorage(userId).setItem(updatedHabits);
+			createUserStorage$1(userId).setItem(updatedHabits);
 			return { habits: updatedHabits };
 		});
 	},
@@ -12172,18 +12181,24 @@ var useHabitsStore = create()((set) => ({
 					}]
 				};
 			});
-			createUserStorage(userId).setItem(updatedHabits);
+			createUserStorage$1(userId).setItem(updatedHabits);
 			return { habits: updatedHabits };
 		});
 	},
 	loadHabitsForUser: (userId) => {
-		const storage = createUserStorage(userId);
+		const storage = createUserStorage$1(userId);
 		let saved = storage.getItem();
 		if (!saved) {
 			saved = [];
 			storage.setItem(saved);
 		}
 		set({ habits: saved });
+	},
+	setHabits: (habits) => {
+		const userId = useAuthStore.getState().activeUserId;
+		if (!userId) return;
+		createUserStorage$1(userId).setItem(habits);
+		set({ habits });
 	}
 }));
 //#endregion
@@ -12208,6 +12223,52 @@ var colors = {
 		border: "#E0E0E0"
 	}
 };
+//#endregion
+//#region src/entities/user/model/store.ts
+var createUserStorage = (userId) => {
+	const key = makeUserStorageKey(userId, "habit-former-user");
+	return {
+		getItem: () => {
+			const value = localStorage.getItem(key);
+			return value ? JSON.parse(value) : null;
+		},
+		setItem: (value) => {
+			localStorage.setItem(key, JSON.stringify(value));
+		}
+	};
+};
+var defaultUser = {
+	name: "Guest",
+	avatarColor: "#7c5cff",
+	theme: "dark"
+};
+var useUserStore = create((set) => ({
+	...defaultUser,
+	loadUser: (userId) => {
+		const storage = createUserStorage(userId);
+		let user = storage.getItem();
+		if (!user) {
+			user = {
+				...defaultUser,
+				name: userId
+			};
+			storage.setItem(user);
+		}
+		set(user);
+	},
+	updateUser: (changes) => {
+		const userId = useAuthStore.getState().activeUserId;
+		if (!userId) return;
+		set((state) => {
+			const updated = {
+				...state,
+				...changes
+			};
+			createUserStorage(userId).setItem(updated);
+			return updated;
+		});
+	}
+}));
 //#endregion
 //#region node_modules/react/cjs/react-jsx-runtime.production.js
 /**
@@ -12252,7 +12313,7 @@ var ThemeContext = (0, import_react.createContext)({
 	colors: colors.dark
 });
 var ThemeProvider = ({ children }) => {
-	const [theme] = (0, import_react.useState)("dark");
+	const theme = useUserStore((s) => s.theme) || "dark";
 	const value = {
 		theme,
 		colors: colors[theme]
@@ -13442,54 +13503,158 @@ function HabitDetailPage() {
 var login = (userId) => {
 	useAuthStore.getState().login(userId);
 	useHabitsStore.getState().loadHabitsForUser(userId);
+	useUserStore.getState().loadUser(userId);
+};
+//#endregion
+//#region src/widgets/auth/UserCard.tsx
+var getUserPreview = (userId) => {
+	const raw = localStorage.getItem(makeUserStorageKey(userId, "habit-former-user"));
+	return raw ? JSON.parse(raw) : null;
+};
+var UserCard = ({ user }) => {
+	const { colors } = useTheme();
+	const data = getUserPreview(user);
+	const avatarColor = data?.avatarColor ?? colors.primary;
+	const name = data?.name ?? user;
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		onClick: () => login(user),
+		style: {
+			display: "flex",
+			alignItems: "center",
+			gap: "12px",
+			padding: "14px",
+			borderRadius: "16px",
+			cursor: "pointer",
+			background: `linear-gradient(135deg, ${colors.surface}, ${avatarColor}22)`,
+			border: `1px solid ${colors.border}`,
+			transition: "all 0.2s ease"
+		},
+		onMouseEnter: (e) => {
+			e.currentTarget.style.transform = "translateY(-2px)";
+			e.currentTarget.style.boxShadow = `0 10px 25px ${avatarColor}33`;
+		},
+		onMouseLeave: (e) => {
+			e.currentTarget.style.transform = "none";
+			e.currentTarget.style.boxShadow = "none";
+		},
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				style: {
+					width: "44px",
+					height: "44px",
+					borderRadius: "50%",
+					background: avatarColor,
+					display: "flex",
+					alignItems: "center",
+					justifyContent: "center",
+					color: "#fff",
+					fontWeight: 700,
+					fontSize: "16px",
+					boxShadow: `0 0 12px ${avatarColor}55`
+				},
+				children: name.charAt(0).toUpperCase()
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				style: { flex: 1 },
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+					style: {
+						color: colors.text,
+						fontWeight: 600,
+						fontSize: "14px"
+					},
+					children: name
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+					style: {
+						fontSize: "12px",
+						color: colors.mutedText
+					},
+					children: "Tap to continue"
+				})]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				style: {
+					opacity: .4,
+					color: colors.text
+				},
+				children: "→"
+			})
+		]
+	}, user);
 };
 //#endregion
 //#region src/pages/auth/Auth.tsx
 function AuthPage() {
 	const { colors } = useTheme();
 	const [user, setUser] = (0, import_react.useState)(null);
+	const users = useAuthStore((s) => s.users);
 	const handleSumbit = () => {
 		if (!user) return;
 		login(user);
 	};
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 		style: {
-			backgroundColor: colors.background,
-			color: colors.text,
+			background: `linear-gradient(180deg, ${colors.background}, ${colors.surface})`,
 			minHeight: "100vh",
 			display: "flex",
-			flexDirection: "column",
-			fontFamily: typography.fontFamily
+			alignItems: "center",
+			justifyContent: "center",
+			fontFamily: typography.fontFamily,
+			padding: "16px"
 		},
 		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-			className: "card",
 			style: {
-				padding: "36px",
-				margin: "auto",
-				textAlign: "center",
-				gap: "16px",
-				display: "flex",
-				flexDirection: "column",
-				alignItems: "center",
-				justifyContent: "center",
-				backgroundColor: colors.surface,
-				borderRadius: "16px",
-				boxShadow: "0px 4px 8px rgba(183, 156, 156, 0.1)"
+				width: "100%",
+				maxWidth: "420px",
+				background: colors.surface,
+				borderRadius: "24px",
+				padding: "28px",
+				border: `1px solid ${colors.border}`,
+				boxShadow: `0 20px 50px ${colors.primary}22`
 			},
 			children: [
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
-					style: { color: colors.text },
-					children: "Login/Signup"
+					style: {
+						textAlign: "center",
+						marginBottom: "24px",
+						color: colors.text
+					},
+					children: users?.length ? "Welcome back!" : "Sign up or login"
 				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+					style: {
+						display: "flex",
+						flexDirection: "column",
+						gap: "12px",
+						marginBottom: "20px"
+					},
+					children: users.map((u) => {
+						return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(UserCard, { user: u }, u);
+					})
+				}),
+				users?.length > 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+					style: {
+						textAlign: "center",
+						margin: "16px 0",
+						fontSize: "12px",
+						opacity: .5,
+						color: colors.mutedText,
+						fontWeight: 600
+					},
+					children: "or create new"
+				}) : null,
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(InputField, {
 					type: "text",
-					placeholder: "User ID",
+					placeholder: "Enter new user ID",
 					onChange: (e) => setUser(e.target.value)
 				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
 					variant: "primary",
 					onClick: handleSumbit,
-					children: "Login"
+					style: {
+						marginTop: "12px",
+						width: "100%"
+					},
+					children: "Continue"
 				})
 			]
 		})
@@ -13919,26 +14084,324 @@ var logout = () => {
 	useHabitsStore.setState({ habits: [] });
 };
 //#endregion
+//#region src/entities/habit/utils/importExportUtils.ts
+var normalize = (s) => s.trim().toLowerCase();
+var mergeHabits = (existing, incoming) => {
+	const result = [...existing];
+	for (const incomingHabit of incoming) {
+		let match = result.find((h) => h.id === incomingHabit.id);
+		if (!match) match = result.find((h) => normalize(h.title) === normalize(incomingHabit.title));
+		if (!match) {
+			result.push(incomingHabit);
+			continue;
+		}
+		const entryMap = new Map(match.entries.map((e) => [e.date, e]));
+		for (const entry of incomingHabit.entries) {
+			const existingEntry = entryMap.get(entry.date);
+			if (!existingEntry) entryMap.set(entry.date, entry);
+			else entryMap.set(entry.date, {
+				...existingEntry,
+				...entry,
+				done: existingEntry.done || entry.done,
+				amountEarned: existingEntry.done || entry.done ? Math.max(existingEntry.amountEarned, entry.amountEarned) : 0
+			});
+		}
+		match.entries = Array.from(entryMap.values());
+		match.title = incomingHabit.title;
+		match.difficulty = incomingHabit.difficulty;
+		match.pay = incomingHabit.pay;
+	}
+	return result;
+};
+//#endregion
+//#region src/features/habit/exportData.ts
+var exportData = () => {
+	const habits = useHabitsStore.getState().habits;
+	const data = {
+		version: 1,
+		exportedAt: (/* @__PURE__ */ new Date()).toISOString(),
+		habits
+	};
+	const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement("a");
+	a.href = url;
+	a.download = "habit-former-data.json";
+	a.click();
+	URL.revokeObjectURL(url);
+};
+//#endregion
+//#region src/widgets/profile/ImportExport.tsx
+var ImportExport = () => {
+	const fileRef = (0, import_react.useRef)(null);
+	const [open, setOpen] = (0, import_react.useState)(false);
+	const [mode, setMode] = (0, import_react.useState)("merge");
+	const [file, setFile] = (0, import_react.useState)(null);
+	const setHabits = useHabitsStore((s) => s.setHabits);
+	const habits = useHabitsStore((s) => s.habits);
+	const handleFile = (e) => {
+		if (!e.target.files?.[0]) return;
+		setFile(e.target.files[0]);
+		setOpen(true);
+	};
+	const handleImport = async () => {
+		if (!file) return;
+		const text = await file.text();
+		const incoming = JSON.parse(text).habits ?? [];
+		console.log(incoming);
+		if (mode === "replace") setHabits(incoming);
+		else setHabits(mergeHabits(habits, incoming));
+		setOpen(false);
+		setFile(null);
+	};
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+			type: "file",
+			accept: "application/json",
+			ref: fileRef,
+			style: { display: "none" },
+			onChange: handleFile
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			style: {
+				display: "flex",
+				gap: "12px",
+				justifyContent: "center"
+			},
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+				onClick: () => fileRef.current?.click(),
+				children: "Import Data"
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+				onClick: () => exportData(),
+				children: "Export Data"
+			})]
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Modal, {
+			isOpen: open,
+			onClose: () => setOpen(false),
+			title: "Import Data",
+			actions: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+				onClick: handleImport,
+				children: "Import"
+			}),
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				style: {
+					display: "flex",
+					flexDirection: "column",
+					gap: "12px"
+				},
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+					type: "radio",
+					checked: mode === "merge",
+					onChange: () => setMode("merge")
+				}), "Merge (recommended)"] }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+					type: "radio",
+					checked: mode === "replace",
+					onChange: () => setMode("replace")
+				}), "Replace all data"] })]
+			})
+		})
+	] });
+};
+//#endregion
 //#region src/pages/profile/ProfilePage.tsx
+var vibeColors = [
+	"#7c5cff",
+	"#ff6b6b",
+	"#00c2a8",
+	"#f59e0b"
+];
 function ProfilePage() {
 	const { colors } = useTheme();
+	const { name, avatarColor, theme, updateUser } = useUserStore();
+	const [localName, setLocalName] = (0, import_react.useState)(name);
 	const handleLogout = () => {
 		logout();
 	};
+	const updateProfile = () => {
+		updateUser({ name: localName });
+	};
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-		className: "card",
-		style: { paddingBottom: "24px" },
-		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
-			style: {
-				color: colors.text,
-				marginBottom: "24px"
-			},
-			children: "Profile"
-		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
-			variant: "secondary",
-			onClick: handleLogout,
-			children: "Logout"
-		})]
+		style: {
+			maxWidth: "500px",
+			margin: "0 auto",
+			padding: "24px 16px 100px"
+		},
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				style: {
+					background: `linear-gradient(135deg, ${colors.surface}, ${colors.primary}11)`,
+					borderRadius: "28px",
+					padding: "24px",
+					border: `1px solid ${colors.border}`,
+					boxShadow: `0 10px 30px ${colors.primary}22`,
+					marginBottom: "20px",
+					textAlign: "center"
+				},
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+						style: {
+							width: "80px",
+							height: "80px",
+							borderRadius: "50%",
+							background: avatarColor,
+							margin: "0 auto 12px",
+							display: "flex",
+							alignItems: "center",
+							justifyContent: "center",
+							fontSize: "28px",
+							color: "#fff",
+							fontWeight: 700,
+							boxShadow: `0 0 20px ${avatarColor}55`
+						},
+						children: name.charAt(0).toUpperCase()
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						style: { marginTop: "16px" },
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+							style: {
+								fontSize: "14px",
+								opacity: .6,
+								marginBottom: "8px"
+							},
+							children: "Avatar color"
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+							style: {
+								display: "flex",
+								gap: "10px",
+								justifyContent: "center"
+							},
+							children: vibeColors.map((c) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+								onClick: () => updateUser({ avatarColor: c }),
+								style: {
+									width: "28px",
+									height: "28px",
+									borderRadius: "50%",
+									background: c,
+									cursor: "pointer",
+									border: c === avatarColor ? `2px solid ${colors.text}` : "2px solid transparent",
+									boxShadow: `0 0 10px ${c}55`
+								}
+							}, c))
+						})]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+						style: {
+							color: colors.text,
+							margin: 0
+						},
+						children: name
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						style: { marginTop: "20px" },
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+							style: {
+								fontSize: "14px",
+								opacity: .6,
+								marginBottom: "8px"
+							},
+							children: "Theme"
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+							style: {
+								display: "flex",
+								gap: "10px",
+								justifyContent: "center"
+							},
+							children: ["light", "dark"].map((t) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+								onClick: () => updateUser({ theme: t }),
+								style: {
+									padding: "8px 14px",
+									borderRadius: "12px",
+									cursor: "pointer",
+									background: theme === t ? colors.primary : colors.surface,
+									color: theme === t ? "#fff" : colors.text,
+									border: `1px solid ${colors.border}`
+								},
+								children: t
+							}, t))
+						})]
+					})
+				]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				style: {
+					display: "flex",
+					flexDirection: "column",
+					background: colors.surface,
+					borderRadius: "20px",
+					padding: "20px",
+					border: `1px solid ${colors.border}`,
+					marginBottom: "16px"
+				},
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+						style: {
+							marginBottom: "12px",
+							fontSize: "14px",
+							opacity: .6
+						},
+						children: "Edit profile"
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(InputField, {
+						label: "Your name",
+						value: localName,
+						onChange: (e) => setLocalName(e.target.value)
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+						variant: "primary",
+						style: {
+							marginTop: "12px",
+							alignSelf: "center"
+						},
+						onClick: updateProfile,
+						disabled: !localName,
+						children: "Update"
+					})
+				]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				style: {
+					display: "flex",
+					flexDirection: "column",
+					background: colors.surface,
+					borderRadius: "20px",
+					padding: "20px",
+					border: `1px solid ${colors.border}`,
+					marginBottom: "16px"
+				},
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+					style: {
+						marginBottom: "12px",
+						fontSize: "14px",
+						opacity: .6
+					},
+					children: "Data Management"
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ImportExport, {})]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				style: {
+					display: "flex",
+					flexDirection: "column",
+					background: `${colors.surface}`,
+					borderRadius: "20px",
+					padding: "20px",
+					border: `1px solid ${colors.border}`
+				},
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+					style: {
+						marginBottom: "12px",
+						fontSize: "14px",
+						opacity: .6
+					},
+					children: "Settings"
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+					variant: "secondary",
+					onClick: handleLogout,
+					style: { alignSelf: "center" },
+					children: "Logout"
+				})]
+			})
+		]
 	});
 }
 //#endregion
@@ -13998,13 +14461,26 @@ function AppRoutes() {
 	] });
 }
 //#endregion
+//#region src/app/utils/helpers.ts
+var migrateUsers = () => {
+	const userIds = Object.keys(localStorage).filter((k) => k.startsWith("habit-former-user-")).map((k) => k.replace("habit-former-user-", ""));
+	useAuthStore.setState({ users: userIds });
+};
+//#endregion
 //#region src/app/App.tsx
 function App() {
 	const userId = useAuthStore((state) => state.activeUserId);
 	const loadHabitsForUser = useHabitsStore((state) => state.loadHabitsForUser);
+	const loadUser = useUserStore((state) => state.loadUser);
 	(0, import_react.useEffect)(() => {
-		if (userId) loadHabitsForUser(userId);
+		if (userId) {
+			loadHabitsForUser(userId);
+			loadUser(userId);
+		}
 	}, [userId]);
+	(0, import_react.useEffect)(() => {
+		migrateUsers();
+	}, []);
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(HashRouter, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ThemeProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AppRoutes, {}) }) });
 }
 //#endregion
